@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "822958082668",
+    "project_id": "villavibe-ff644",
+    "storage_bucket": "villavibe-ff644.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:822958082668:android:c9e8b36d41d97981da2649",
+        "android_client_info": {
+          "package_name": "com.example.villavibe"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBq3BYPg2u_qrzUpjKcX6sfeYook2kEBU8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

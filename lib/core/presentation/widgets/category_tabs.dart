@@ -12,9 +12,8 @@ class CategoryTabs extends StatelessWidget {
 
   final List<Map<String, dynamic>> _categories = const [
     {'name': 'Homes', 'icon': Icons.home_outlined},
-    {'name': 'Beaches', 'icon': Icons.beach_access_outlined, 'isNew': true},
-    {'name': 'Mountain', 'icon': Icons.landscape_outlined, 'isNew': true},
-    {'name': 'City', 'icon': Icons.location_city_outlined, 'isNew': true},
+    {'name': 'Experiences', 'icon': Icons.beach_access_outlined, 'isNew': true},
+    {'name': 'Services', 'icon': Icons.room_service_outlined, 'isNew': true},
   ];
 
   @override

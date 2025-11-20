@@ -10,7 +10,7 @@ import 'package:villavibe/core/presentation/widgets/bottom_nav_bar.dart';
 import 'package:villavibe/core/presentation/widgets/custom_search_bar.dart';
 import 'package:villavibe/core/presentation/widgets/category_tabs.dart';
 import 'package:villavibe/core/presentation/widgets/property_card.dart';
-import 'package:villavibe/core/presentation/widgets/property_card_shimmer.dart';
+
 import 'package:villavibe/features/guest/presentation/widgets/login_prompt_view.dart';
 import 'package:villavibe/features/guest/presentation/widgets/profile_login_view.dart';
 import 'package:villavibe/features/guest/presentation/widgets/authenticated_profile_view.dart';
@@ -119,18 +119,12 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                 final filteredProperties = properties.where((p) {
                   if (_selectedCategory == 'Homes') {
                     return true;
-                  } else if (_selectedCategory == 'Beaches') {
-                    return p.description.toLowerCase().contains('beach') ||
-                        p.description.toLowerCase().contains('ocean') ||
-                        p.amenities.contains('Beach access');
-                  } else if (_selectedCategory == 'Mountain') {
-                    return p.description.toLowerCase().contains('mountain') ||
-                        p.description.toLowerCase().contains('hill') ||
-                        p.amenities.contains('Mountain view');
-                  } else if (_selectedCategory == 'City') {
-                    return p.description.toLowerCase().contains('city') ||
-                        p.description.toLowerCase().contains('jakarta') ||
-                        p.description.toLowerCase().contains('urban');
+                  } else if (_selectedCategory == 'Experiences') {
+                    return p.description.toLowerCase().contains('experience') ||
+                        p.amenities.contains('Experience');
+                  } else if (_selectedCategory == 'Services') {
+                    return p.description.toLowerCase().contains('service') ||
+                        p.amenities.contains('Service');
                   }
                   return true;
                 }).toList();
@@ -163,15 +157,21 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                       _buildSection(
                         context,
                         title: 'Popular homes in Jakarta',
-                        properties: filteredProperties.take(5).toList(),
+                        properties: filteredProperties
+                            .where((p) =>
+                                p.city == 'Menteng' || p.city == 'Kalibata')
+                            .toList(),
                         delay: 400.ms,
                       ),
                       const SizedBox(height: 32),
                       // Available this weekend section
                       _buildSection(
                         context,
-                        title: 'Available this weekend',
-                        properties: filteredProperties.skip(5).take(5).toList(),
+                        title: 'Available in Yogyakarta this weekend',
+                        properties: filteredProperties
+                            .where((p) =>
+                                p.city == 'Yogyakarta' || p.city == 'Ngaglik')
+                            .toList(),
                         delay: 600.ms,
                       ),
                       const SizedBox(height: 100), // Space for bottom nav
@@ -179,11 +179,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                   ),
                 );
               },
-              loading: () => ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: 3,
-                itemBuilder: (context, index) => const PropertyCardShimmer(),
-              ),
+              loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, st) => Center(child: Text('Error: $e')),
             ),
           ),

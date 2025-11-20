@@ -53,60 +53,15 @@ class PropertyCard extends StatelessWidget {
                           ),
                   ),
                 ),
-                // Guest favorite badge
-                if (property.rating >= 4.8)
-                  Positioned(
-                    top: 12,
-                    left: 12,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text(
-                            'Guest favorite',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                      .animate()
-                      .fade(duration: 600.ms)
-                      .slideX(begin: -0.2, end: 0),
                 // Favorite heart icon
                 if (showFavorite)
                   Positioned(
                     top: 12,
                     right: 12,
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.favorite_border,
-                        size: 20,
-                        color: Colors.grey[800],
-                      ),
+                    child: Icon(
+                      Icons.favorite_border,
+                      size: 24,
+                      color: Colors.white,
                     ),
                   ).animate().scale(delay: 200.ms),
               ],
@@ -115,6 +70,7 @@ class PropertyCard extends StatelessWidget {
             // Property details
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
                   child: Text(
@@ -123,16 +79,17 @@ class PropertyCard extends StatelessWidget {
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
                     ),
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                const SizedBox(width: 8),
                 Row(
                   children: [
                     const Icon(Icons.star, size: 14),
                     const SizedBox(width: 2),
                     Text(
-                      '5.0', // Hardcoded to match reference image style for now, or use property.rating.toStringAsFixed(1)
+                      property.rating.toStringAsFixed(1),
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -143,14 +100,6 @@ class PropertyCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 4),
-            Text(
-              property.city, // Or "Condo in..." based on reference
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
-              ),
-            ),
-            const SizedBox(height: 8),
             RichText(
               text: TextSpan(
                 style: TextStyle(

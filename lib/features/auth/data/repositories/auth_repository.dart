@@ -90,13 +90,26 @@ class AuthRepository {
     }
   }
 
-  Future<List<String>> fetchSignInMethodsForEmail(String email) async {
+  Future<bool> checkUserExists(String email) async {
     try {
-      return await _auth.fetchSignInMethodsForEmail(email);
+      // First try to fetch sign in methods (fastest if allowed)
+      try {
+        final methods = await _auth.fetchSignInMethodsForEmail(email);
+        if (methods.isNotEmpty) return true;
+      } catch (_) {
+        // Ignore error and fall back to Firestore
+      }
+
+      // Fallback: Check Firestore
+      final querySnapshot = await _firestore
+          .collection('users')
+          .where('email', isEqualTo: email)
+          .limit(1)
+          .get();
+
+      return querySnapshot.docs.isNotEmpty;
     } catch (e) {
-      // If error (e.g. invalid email), return empty list or rethrow
-      // For now, rethrow to handle in UI
-      rethrow;
+      throw Exception('Failed to check user existence: $e');
     }
   }
 

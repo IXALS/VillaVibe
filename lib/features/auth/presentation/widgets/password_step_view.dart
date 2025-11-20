@@ -63,36 +63,22 @@ class _PasswordStepViewState extends State<PasswordStepView> {
               const SizedBox(width: 24), // Balance back button
             ],
           ),
-          const SizedBox(height: 24),
-          const Divider(),
-          const SizedBox(height: 24),
+          const SizedBox(height: 40),
 
-          // Email (Read-only)
-          const Text(
-            'Email',
-            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+          // Logo/Welcome
+          const Icon(Icons.home_filled, size: 48, color: Color(0xFFE31C5F)),
+          const SizedBox(height: 16),
+          Text(
+            'Welcome to VillaVibe',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 8),
-          TextFormField(
-            initialValue: widget.email,
-            readOnly: true,
-            decoration: InputDecoration(
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-            ),
-            style: const TextStyle(color: Colors.grey),
-          ),
-          const SizedBox(height: 24),
+
+          const SizedBox(height: 40),
 
           // Password
-          const Text(
-            'Password',
-            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
-          ),
-          const SizedBox(height: 8),
           TextFormField(
             controller: _passwordController,
             obscureText: !_showPassword,
@@ -148,23 +134,25 @@ class _PasswordStepViewState extends State<PasswordStepView> {
                     ),
                   )
                 : const Text(
-                    'Log in',
+                    'Continue',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
 
-          TextButton(
-            onPressed: () {
-              // TODO: Implement forgot password
-            },
-            child: const Text(
-              'Forgot password?',
-              style: TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.w600,
-                decoration: TextDecoration.underline,
+          Center(
+            child: TextButton(
+              onPressed: () {
+                // TODO: Implement forgot password
+              },
+              child: const Text(
+                'Forgot password?',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.w600,
+                  decoration: TextDecoration.underline,
+                ),
               ),
             ),
           ),

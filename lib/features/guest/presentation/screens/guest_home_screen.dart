@@ -13,6 +13,7 @@ import 'package:villavibe/core/presentation/widgets/property_card.dart';
 import 'package:villavibe/core/presentation/widgets/property_card_shimmer.dart';
 import 'package:villavibe/features/guest/presentation/widgets/login_prompt_view.dart';
 import 'package:villavibe/features/guest/presentation/widgets/profile_login_view.dart';
+import 'package:villavibe/features/guest/presentation/widgets/authenticated_profile_view.dart';
 
 class GuestHomeScreen extends ConsumerStatefulWidget {
   const GuestHomeScreen({super.key});
@@ -69,21 +70,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
           if (user == null) {
             return const ProfileLoginView();
           }
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text('Welcome, ${user.displayName}'),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    ref.read(authRepositoryProvider).signOut();
-                  },
-                  child: const Text('Log out'),
-                ),
-              ],
-            ),
-          );
+          return const AuthenticatedProfileView();
         default:
           return _buildExploreContent(allPropertiesAsync);
       }

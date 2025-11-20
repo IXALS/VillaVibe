@@ -36,17 +36,15 @@ class _LoginModalState extends ConsumerState<LoginModal> {
     });
 
     try {
-      final methods = await ref
-          .read(authRepositoryProvider)
-          .fetchSignInMethodsForEmail(email);
+      final exists =
+          await ref.read(authRepositoryProvider).checkUserExists(email);
 
       if (mounted) {
         setState(() {
           _isLoading = false;
-          // If methods is not empty, user exists -> Password step
-          // If methods is empty, user is new -> Signup step
-          _currentStep =
-              methods.isNotEmpty ? AuthStep.password : AuthStep.signup;
+          // If user exists -> Password step
+          // If user does not exist -> Signup step
+          _currentStep = exists ? AuthStep.password : AuthStep.signup;
         });
       }
     } catch (e) {

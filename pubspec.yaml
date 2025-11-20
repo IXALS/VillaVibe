@@ -34,6 +34,7 @@ dependencies:
   intl: ^0.19.0
   syncfusion_flutter_datepicker: ^25.1.35
   uuid: ^4.3.3
+  shared_preferences: ^2.5.3
 
 
 dev_dependencies:

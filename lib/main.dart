@@ -5,6 +5,9 @@ import 'firebase_options.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
+import 'features/auth/data/repositories/onboarding_repository.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -12,7 +15,15 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  runApp(const ProviderScope(child: VillaVibeApp()));
+  final prefs = await SharedPreferences.getInstance();
+
+  runApp(ProviderScope(
+    overrides: [
+      onboardingRepositoryProvider
+          .overrideWithValue(OnboardingRepository(prefs)),
+    ],
+    child: const VillaVibeApp(),
+  ));
 }
 
 class VillaVibeApp extends ConsumerWidget {

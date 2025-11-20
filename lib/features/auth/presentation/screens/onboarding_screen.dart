@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:villavibe/features/auth/presentation/widgets/login_modal.dart';
+import 'package:villavibe/features/auth/data/repositories/onboarding_repository.dart';
 
-class OnboardingScreen extends StatelessWidget {
+class OnboardingScreen extends ConsumerWidget {
   const OnboardingScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
@@ -92,7 +94,12 @@ class OnboardingScreen extends StatelessWidget {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () => context.go('/home'),
+                      onPressed: () {
+                        ref
+                            .read(onboardingRepositoryProvider)
+                            .setOnboardingCompleted();
+                        context.go('/home');
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF0066FF), // Blue
                         foregroundColor: Colors.white,

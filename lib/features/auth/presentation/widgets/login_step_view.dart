@@ -22,6 +22,19 @@ class _LoginStepViewState extends ConsumerState<LoginStepView> {
   final _emailController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
+  bool _isPhoneAuth =
+      false; // Default to Email as per user request flow implication, or maybe Phone? User said "remove input box email, just add normal continue with email button... then when clicked... change into only input email box". So starts with Phone (implied by "change into only input email"). Let's stick to the plan: Start with Phone.
+  // Wait, user said: "I want it to remove the input box email, just add the normal continue with email button".
+  // Current code has BOTH.
+  // User wants: Start with Phone input. Email input is HIDDEN. "Continue with email" button is VISIBLE.
+  // Click "Continue with email" -> Phone input HIDDEN. Email input VISIBLE. "Continue with Phone" button VISIBLE.
+
+  @override
+  void initState() {
+    super.initState();
+    _isPhoneAuth = true; // Start with Phone
+  }
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -32,6 +45,12 @@ class _LoginStepViewState extends ConsumerState<LoginStepView> {
     if (_formKey.currentState!.validate()) {
       widget.onContinue(_emailController.text.trim());
     }
+  }
+
+  void _toggleAuthMode() {
+    setState(() {
+      _isPhoneAuth = !_isPhoneAuth;
+    });
   }
 
   @override
@@ -49,81 +68,133 @@ class _LoginStepViewState extends ConsumerState<LoginStepView> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
-          // Country/Region selector placeholder (Visual only for now as per image)
-          Container(
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey[400]!),
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(8)),
+
+          // Main Input Area
+          if (_isPhoneAuth) ...[
+            // Country/Region selector placeholder
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey[400]!),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(8)),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Country/Region',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                      ),
+                      const Text(
+                        'Indonesia (+62)',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    ],
+                  ),
+                  const Icon(Icons.keyboard_arrow_down),
+                ],
+              ),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Country/Region',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                    ),
-                    const Text(
-                      'Indonesia (+62)',
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  ],
+            // Phone number placeholder
+            Container(
+              decoration: BoxDecoration(
+                border: Border(
+                  left: BorderSide(color: Colors.grey[400]!),
+                  right: BorderSide(color: Colors.grey[400]!),
+                  bottom: BorderSide(color: Colors.grey[400]!),
                 ),
-                const Icon(Icons.keyboard_arrow_down),
-              ],
-            ),
-          ),
-          // Phone number placeholder (Visual only)
-          Container(
-            decoration: BoxDecoration(
-              border: Border(
-                left: BorderSide(color: Colors.grey[400]!),
-                right: BorderSide(color: Colors.grey[400]!),
-                bottom: BorderSide(color: Colors.grey[400]!),
+                borderRadius:
+                    const BorderRadius.vertical(bottom: Radius.circular(8)),
               ),
-              borderRadius:
-                  const BorderRadius.vertical(bottom: Radius.circular(8)),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: TextFormField(
-              decoration: const InputDecoration(
-                hintText: 'Phone number',
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(vertical: 16),
-              ),
-              keyboardType: TextInputType.phone,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'We\'ll call or text to confirm your number. Standard message and data rates apply.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.grey[600],
-                  fontSize: 12,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: TextFormField(
+                decoration: const InputDecoration(
+                  hintText: 'Phone number',
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(vertical: 16),
                 ),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: () {
-              // TODO: Implement phone auth
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFE31C5F),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+                keyboardType: TextInputType.phone,
               ),
             ),
-            child: const Text(
-              'Continue',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            const SizedBox(height: 8),
+            Text(
+              'We\'ll call or text to confirm your number. Standard message and data rates apply.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.grey[600],
+                    fontSize: 12,
+                  ),
             ),
-          ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () {
+                // TODO: Implement phone auth
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFE31C5F),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text(
+                'Continue',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ] else ...[
+            // Email Input Section
+            TextFormField(
+              controller: _emailController,
+              decoration: InputDecoration(
+                labelText: 'Email',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                prefixIcon: const Icon(Icons.email_outlined),
+              ),
+              keyboardType: TextInputType.emailAddress,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter your email';
+                }
+                if (!value.contains('@')) {
+                  return 'Please enter a valid email';
+                }
+                return null;
+              },
+              onFieldSubmitted: (_) => _submit(),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: widget.isLoading ? null : _submit,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFE31C5F),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: widget.isLoading
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Text(
+                      'Continue',
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    ),
+            ),
+          ],
+
           const SizedBox(height: 24),
           Row(
             children: [
@@ -136,60 +207,21 @@ class _LoginStepViewState extends ConsumerState<LoginStepView> {
             ],
           ),
           const SizedBox(height: 24),
-          // Email Input Section (The actual flow we are implementing)
-          TextFormField(
-            controller: _emailController,
-            decoration: InputDecoration(
-              labelText: 'Email',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              prefixIcon: const Icon(Icons.email_outlined),
+
+          // Toggle Button (Email <-> Phone)
+          if (_isPhoneAuth)
+            _buildSocialButton(
+              icon: Icons.email_outlined,
+              label: 'Continue with email',
+              onTap: _toggleAuthMode,
+            )
+          else
+            _buildSocialButton(
+              icon: Icons.phone_android,
+              label: 'Continue with Phone',
+              onTap: _toggleAuthMode,
             ),
-            keyboardType: TextInputType.emailAddress,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter your email';
-              }
-              if (!value.contains('@')) {
-                return 'Please enter a valid email';
-              }
-              return null;
-            },
-            onFieldSubmitted: (_) => _submit(),
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: widget.isLoading ? null : _submit,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: Colors.black,
-              elevation: 0,
-              side: const BorderSide(color: Colors.black),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: widget.isLoading
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.email_outlined, size: 20),
-                      SizedBox(width: 12),
-                      Text(
-                        'Continue with email',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w600),
-                      ),
-                    ],
-                  ),
-          ),
+
           const SizedBox(height: 16),
           _buildSocialButton(
             icon: Icons.apple,
@@ -198,7 +230,7 @@ class _LoginStepViewState extends ConsumerState<LoginStepView> {
           ),
           const SizedBox(height: 16),
           _buildSocialButton(
-            icon: Icons.g_mobiledata, // Using generic icon for now
+            icon: Icons.g_mobiledata,
             label: 'Continue with Google',
             onTap: widget.onGoogleSignIn,
             customIcon: const Icon(Icons.g_mobiledata, size: 28),

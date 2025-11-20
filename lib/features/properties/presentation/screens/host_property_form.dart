@@ -209,8 +209,15 @@ class _HostPropertyFormState extends ConsumerState<HostPropertyForm> {
     );
 
     await ref.read(propertyRepositoryProvider).addProperty(property);
+
+    // Upgrade user to host if not already
+    if (!user.isHost) {
+      await ref.read(authRepositoryProvider).upgradeToHost(user.uid);
+    }
+
     if (mounted) {
-      context.pop();
+      // Navigate to Host Dashboard and clear stack to force refresh
+      context.go('/host-dashboard');
     }
   }
 }

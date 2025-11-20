@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../data/repositories/property_repository.dart';
 import '../../../auth/data/repositories/auth_repository.dart';
-import '../../domain/models/property.dart';
+
 import '../../../../core/presentation/widgets/property_card_shimmer.dart';
 
 class HostDashboardScreen extends ConsumerWidget {
@@ -17,6 +17,15 @@ class HostDashboardScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Host Dashboard'),
         actions: [
+          TextButton.icon(
+            onPressed: () => context.go('/home'),
+            icon: Icon(Icons.person,
+                color: Theme.of(context).colorScheme.primary),
+            label: Text('Guest Mode',
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.bold)),
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () => ref.read(authRepositoryProvider).signOut(),
@@ -24,7 +33,7 @@ class HostDashboardScreen extends ConsumerWidget {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push('/host/add-property'),
+        onPressed: () => context.push('/add-property'),
         label: const Text('Add Property'),
         icon: const Icon(Icons.add),
       ),
@@ -47,7 +56,7 @@ class HostDashboardScreen extends ConsumerWidget {
                       const Text('No properties listed yet.'),
                       const SizedBox(height: 8),
                       ElevatedButton(
-                        onPressed: () => context.push('/host/add-property'),
+                        onPressed: () => context.push('/add-property'),
                         child: const Text('List your first villa'),
                       ),
                     ],

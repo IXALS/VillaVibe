@@ -31,6 +31,7 @@ class AuthRepository {
     required String email,
     required String password,
     required String displayName,
+    bool isHost = false,
   }) async {
     final credential = await _auth.createUserWithEmailAndPassword(
       email: email,
@@ -43,13 +44,59 @@ class AuthRepository {
         email: email,
         displayName: displayName,
         photoUrl: '',
-        isHost: false,
+        isHost: isHost,
       );
 
       await _firestore
           .collection('users')
           .doc(credential.user!.uid)
           .set(appUser.toMap());
+    }
+  }
+
+  Future<void> upgradeToHost(String uid) async {
+    await _firestore.collection('users').doc(uid).update({'isHost': true});
+  }
+
+  Future<void> signInWithGoogle() async {
+    try {
+      // Create a new provider
+      GoogleAuthProvider googleProvider = GoogleAuthProvider();
+
+      // Once signed in, return the UserCredential
+      final UserCredential userCredential =
+          await _auth.signInWithProvider(googleProvider);
+
+      // Check if user exists in Firestore, if not create
+      final user = userCredential.user;
+      if (user != null) {
+        final doc = await _firestore.collection('users').doc(user.uid).get();
+        if (!doc.exists) {
+          final appUser = AppUser(
+            uid: user.uid,
+            email: user.email ?? '',
+            displayName: user.displayName ?? 'User',
+            photoUrl: user.photoURL ?? '',
+            isHost: false,
+          );
+          await _firestore
+              .collection('users')
+              .doc(user.uid)
+              .set(appUser.toMap());
+        }
+      }
+    } catch (e) {
+      throw Exception('Failed to sign in with Google: $e');
+    }
+  }
+
+  Future<List<String>> fetchSignInMethodsForEmail(String email) async {
+    try {
+      return await _auth.fetchSignInMethodsForEmail(email);
+    } catch (e) {
+      // If error (e.g. invalid email), return empty list or rethrow
+      // For now, rethrow to handle in UI
+      rethrow;
     }
   }
 

@@ -7,6 +7,7 @@ import 'package:villavibe/features/auth/presentation/screens/onboarding_screen.d
 import 'package:villavibe/features/auth/presentation/screens/login_screen.dart';
 import 'package:villavibe/features/auth/data/repositories/auth_repository.dart';
 
+import 'package:villavibe/features/properties/presentation/screens/host_dashboard_screen.dart';
 import 'package:villavibe/features/properties/presentation/screens/host_property_form.dart';
 import 'package:villavibe/features/home/presentation/screens/home_screen.dart';
 import 'package:villavibe/features/guest/presentation/screens/villa_detail_screen.dart';
@@ -29,11 +30,28 @@ GoRouter router(RouterRef ref) {
       final isLaunch = state.uri.toString() == '/';
       final isOnboarding = state.uri.toString() == '/onboarding';
 
-      if (isLaunch) return null; // Allow launch screen
-      if (isOnboarding) return null; // Allow onboarding
+      // Protected routes that require login
+      final isHostRoute = state.uri.toString().startsWith('/host') ||
+          state.uri.toString() == '/add-property';
+      final isBookingRoute = state.uri.toString() == '/booking';
 
-      if (!isLoggedIn && !isLoggingIn) return '/login';
-      if (isLoggedIn && isLoggingIn) return '/home';
+      if (isLaunch) return null;
+      if (isOnboarding) return null;
+
+      // If trying to access protected route and not logged in, go to home (where login modal can be shown)
+      // or we could redirect to login, but user wants modal.
+      // For now, let's redirect to home if they try to access host stuff without login,
+      // or maybe just block them.
+      // Actually, simpler: if not logged in, they can go anywhere EXCEPT host/booking.
+
+      if (!isLoggedIn) {
+        if (isHostRoute || isBookingRoute) {
+          return '/home'; // Redirect to home, where we can show login modal if needed, or just let them browse
+        }
+      }
+
+      // If logged in and on login page or onboarding page, go home
+      if (isLoggedIn && (isLoggingIn || isOnboarding)) return '/home';
 
       return null;
     },
@@ -57,6 +75,10 @@ GoRouter router(RouterRef ref) {
       GoRoute(
         path: '/add-property',
         builder: (context, state) => const HostPropertyForm(),
+      ),
+      GoRoute(
+        path: '/host-dashboard',
+        builder: (context, state) => const HostDashboardScreen(),
       ),
       GoRoute(
         path: '/property/:id',

@@ -18,10 +18,10 @@ dependencies:
   go_router: ^13.2.0
 
   # Firebase
-  firebase_core: ^2.27.0
-  firebase_auth: ^4.17.8
-  cloud_firestore: ^4.15.8
-  firebase_storage: ^11.6.9
+  firebase_core: ^3.6.0
+  firebase_auth: ^5.3.1
+  cloud_firestore: ^5.4.4
+  firebase_storage: ^12.3.0
 
   # UI & Assets
   google_fonts: ^6.1.0

@@ -35,6 +35,8 @@ dependencies:
   syncfusion_flutter_datepicker: ^25.1.35
   uuid: ^4.3.3
   shared_preferences: ^2.5.3
+  wolt_modal_sheet: ^0.11.0
+  lucide_icons: ^0.257.0
 
 
 dev_dependencies:

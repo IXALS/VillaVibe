@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:villavibe/features/properties/domain/models/property.dart';
 
 class PropertyCard extends StatelessWidget {
@@ -17,7 +18,7 @@ class PropertyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 280,
+      width: 240, // Reduced from 280
       margin: const EdgeInsets.only(right: 16),
       child: InkWell(
         onTap: onTap,
@@ -35,21 +36,21 @@ class PropertyCard extends StatelessWidget {
                     child: property.images.isNotEmpty
                         ? Image.network(
                             property.images.first,
-                            height: 260,
-                            width: 280,
+                            height: 220, // Reduced from 260
+                            width: 240, // Reduced from 280
                             fit: BoxFit.cover,
                             errorBuilder: (_, __, ___) => Container(
-                              height: 260,
-                              width: 280,
+                              height: 220,
+                              width: 240,
                               color: Colors.grey[300],
-                              child: const Icon(Icons.image, size: 48),
+                              child: const Icon(LucideIcons.image, size: 48),
                             ),
                           )
                         : Container(
-                            height: 260,
-                            width: 280,
+                            height: 220,
+                            width: 240,
                             color: Colors.grey[300],
-                            child: const Icon(Icons.image, size: 48),
+                            child: const Icon(LucideIcons.image, size: 48),
                           ),
                   ),
                 ),
@@ -59,7 +60,7 @@ class PropertyCard extends StatelessWidget {
                     top: 12,
                     right: 12,
                     child: Icon(
-                      Icons.favorite_border,
+                      LucideIcons.heart,
                       size: 24,
                       color: Colors.white,
                     ),
@@ -86,7 +87,7 @@ class PropertyCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Row(
                   children: [
-                    const Icon(Icons.star, size: 14),
+                    const Icon(LucideIcons.star, size: 14),
                     const SizedBox(width: 2),
                     Text(
                       property.rating.toStringAsFixed(1),

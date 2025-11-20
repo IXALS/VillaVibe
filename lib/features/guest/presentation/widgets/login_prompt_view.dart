@@ -51,9 +51,9 @@ class LoginPromptView extends StatelessWidget {
               ),
               const SizedBox(height: 32),
               ElevatedButton(
-                onPressed: () => LoginModal.show(context),
+                onPressed: () => showLoginModal(context),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFE31C5F), // Airbnb pink
+                  backgroundColor: const Color(0xFFE31C5F),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 32,

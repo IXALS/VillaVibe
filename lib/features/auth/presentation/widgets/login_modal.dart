@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 import 'package:villavibe/features/auth/data/repositories/auth_repository.dart';
 import 'package:villavibe/features/auth/presentation/widgets/login_step_view.dart';
@@ -8,23 +9,31 @@ import 'package:villavibe/features/auth/presentation/widgets/signup_step_view.da
 
 enum AuthStep { email, password, signup }
 
-class LoginModal extends ConsumerStatefulWidget {
-  const LoginModal({super.key});
-
-  static void show(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => const LoginModal(),
-    );
-  }
-
-  @override
-  ConsumerState<LoginModal> createState() => _LoginModalState();
+void showLoginModal(BuildContext context) {
+  WoltModalSheet.show(
+    context: context,
+    pageListBuilder: (context) {
+      return [
+        WoltModalSheetPage(
+          hasSabGradient: false,
+          topBarTitle: const Text('Log in or sign up',
+              style: TextStyle(fontWeight: FontWeight.bold)),
+          isTopBarLayerAlwaysVisible: true,
+          child: const _LoginFlowContent(),
+        ),
+      ];
+    },
+  );
 }
 
-class _LoginModalState extends ConsumerState<LoginModal> {
+class _LoginFlowContent extends ConsumerStatefulWidget {
+  const _LoginFlowContent();
+
+  @override
+  ConsumerState<_LoginFlowContent> createState() => _LoginFlowContentState();
+}
+
+class _LoginFlowContentState extends ConsumerState<_LoginFlowContent> {
   AuthStep _currentStep = AuthStep.email;
   String _email = '';
   bool _isLoading = false;
@@ -42,8 +51,6 @@ class _LoginModalState extends ConsumerState<LoginModal> {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          // If user exists -> Password step
-          // If user does not exist -> Signup step
           _currentStep = exists ? AuthStep.password : AuthStep.signup;
         });
       }
@@ -120,42 +127,9 @@ class _LoginModalState extends ConsumerState<LoginModal> {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: MediaQuery.of(context).size.height * 0.9,
-      child: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-        ),
-        padding: EdgeInsets.only(
-          left: 24,
-          right: 24,
-          top: 24,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-        ),
-        child: Column(
-          children: [
-            // Handle bar
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            Expanded(
-              child: SingleChildScrollView(
-                child: _buildStepContent(),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: _buildStepContent(),
     );
   }
 

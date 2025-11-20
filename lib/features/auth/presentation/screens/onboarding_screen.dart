@@ -124,7 +124,7 @@ class OnboardingScreen extends ConsumerWidget {
                   // Sign In Link
                   Center(
                     child: GestureDetector(
-                      onTap: () => LoginModal.show(context),
+                      onTap: () => showLoginModal(context),
                       child: RichText(
                         text: const TextSpan(
                           text: 'Already have an account? ',

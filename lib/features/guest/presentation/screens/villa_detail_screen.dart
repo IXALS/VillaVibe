@@ -176,9 +176,9 @@ class VillaDetailScreen extends ConsumerWidget {
           ),
           bottomNavigationBar: Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: Colors.white,
-              boxShadow: const [
+              boxShadow: [
                 BoxShadow(
                     color: Colors.black12,
                     blurRadius: 10,
@@ -190,7 +190,7 @@ class VillaDetailScreen extends ConsumerWidget {
                 onPressed: () {
                   final user = userAsync.value;
                   if (user == null) {
-                    LoginModal.show(context);
+                    showLoginModal(context);
                   } else {
                     context.push('/booking', extra: property);
                   }

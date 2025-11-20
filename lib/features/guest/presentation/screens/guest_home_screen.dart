@@ -5,15 +5,17 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:villavibe/features/properties/data/repositories/property_repository.dart';
 import 'package:villavibe/features/properties/domain/models/property.dart';
 import 'package:villavibe/features/auth/data/repositories/auth_repository.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
-import 'package:villavibe/core/presentation/widgets/bottom_nav_bar.dart';
-import 'package:villavibe/core/presentation/widgets/custom_search_bar.dart';
-import 'package:villavibe/core/presentation/widgets/category_tabs.dart';
 import 'package:villavibe/core/presentation/widgets/property_card.dart';
 
 import 'package:villavibe/features/guest/presentation/widgets/login_prompt_view.dart';
 import 'package:villavibe/features/guest/presentation/widgets/profile_login_view.dart';
 import 'package:villavibe/features/guest/presentation/widgets/authenticated_profile_view.dart';
+import 'package:villavibe/features/home/presentation/widgets/home_hero_section.dart';
+import 'package:villavibe/features/home/presentation/widgets/floating_bottom_nav_bar.dart';
+import 'package:villavibe/features/home/presentation/widgets/destination_card.dart';
+import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 class GuestHomeScreen extends ConsumerStatefulWidget {
   const GuestHomeScreen({super.key});
@@ -24,7 +26,6 @@ class GuestHomeScreen extends ConsumerStatefulWidget {
 
 class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
   int _currentNavIndex = 0;
-  String _selectedCategory = 'Homes';
 
   @override
   Widget build(BuildContext context) {
@@ -78,110 +79,137 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7F7),
-      body: buildBody(),
-      bottomNavigationBar: BottomNavBar(
-        currentIndex: _currentNavIndex,
-        onTap: (index) {
-          setState(() {
-            _currentNavIndex = index;
-          });
-        },
-      ).animate().slideY(
-          begin: 1, end: 0, duration: 600.ms, curve: Curves.easeOutQuad),
+      body: Stack(
+        children: [
+          buildBody(),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: FloatingBottomNavBar(
+              currentIndex: _currentNavIndex,
+              onTap: (index) {
+                setState(() {
+                  _currentNavIndex = index;
+                });
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildExploreContent(AsyncValue<List<Property>> allPropertiesAsync) {
-    return SafeArea(
-      bottom: false,
+    return SingleChildScrollView(
+      padding: const EdgeInsets.only(bottom: 100), // Space for floating nav
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Custom Search Bar
-          CustomSearchBar(
-            onTap: () {
-              // TODO: Navigate to search screen
-            },
-          ).animate().fadeIn(duration: 600.ms).slideY(begin: -0.2, end: 0),
-          // Category Tabs
-          CategoryTabs(
-            selectedCategory: _selectedCategory,
-            onCategorySelected: (category) {
+          // Hero Section
+          HomeHeroSection(
+            user: ref.watch(currentUserProvider).value,
+            onProfileTap: () {
               setState(() {
-                _selectedCategory = category;
+                _currentNavIndex = 4; // Switch to Profile tab
               });
             },
-          ).animate().fadeIn(delay: 200.ms).slideX(begin: 0.1, end: 0),
-          // Content
-          Expanded(
-            child: allPropertiesAsync.when(
-              data: (properties) {
-                // Filter by category
-                final filteredProperties = properties.where((p) {
-                  if (_selectedCategory == 'Homes') {
-                    return true;
-                  } else if (_selectedCategory == 'Experiences') {
-                    return p.description.toLowerCase().contains('experience') ||
-                        p.amenities.contains('Experience');
-                  } else if (_selectedCategory == 'Services') {
-                    return p.description.toLowerCase().contains('service') ||
-                        p.amenities.contains('Service');
-                  }
-                  return true;
-                }).toList();
+            onSearchTap: () {
+              WoltModalSheet.show(
+                context: context,
+                pageListBuilder: (modalSheetContext) {
+                  return [
+                    WoltModalSheetPage(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          children: [
+                            const Text('Search functionality coming soon'),
+                            const SizedBox(height: 20),
+                            ElevatedButton(
+                              onPressed: () =>
+                                  Navigator.of(modalSheetContext).pop(),
+                              child: const Text('Close'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ];
+                },
+              );
+            },
+          ).animate().fadeIn(duration: 600.ms),
 
-                if (filteredProperties.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+          const SizedBox(height: 24),
+
+          // Content
+          allPropertiesAsync.when(
+            data: (properties) {
+              // Filter by category (simplified for now as tabs are removed from hero)
+              // We can re-introduce tabs below hero if needed, but design shows "The most relevant" directly
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // "The most relevant" section
+                  _buildSection(
+                    context,
+                    title: 'The most relevant',
+                    properties: properties
+                        .take(5)
+                        .toList(), // Just take first 5 for now
+                    delay: 200.ms,
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // "Discover new places" section
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: const Text(
+                      'Discover new places',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ).animate().fadeIn(delay: 400.ms).slideX(begin: -0.1, end: 0),
+
+                  const SizedBox(height: 16),
+
+                  SizedBox(
+                    height: 180,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
                       children: [
-                        Icon(Icons.search_off,
-                            size: 64, color: Colors.grey[400]),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No ${_selectedCategory.toLowerCase()} found',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey[600],
-                          ),
+                        DestinationCard(
+                          imageUrl:
+                              'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?q=80&w=1972&auto=format&fit=crop', // Cinque Terre
+                          title: 'Cinque Terre',
+                          onTap: () {},
+                        ),
+                        DestinationCard(
+                          imageUrl:
+                              'https://images.unsplash.com/photo-1506953823976-52e1fdc0149a?q=80&w=1935&auto=format&fit=crop', // Beach
+                          title: 'Bali',
+                          onTap: () {},
+                        ),
+                        DestinationCard(
+                          imageUrl:
+                              'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=2070&auto=format&fit=crop', // Mountains
+                          title: 'Swiss Alps',
+                          onTap: () {},
                         ),
                       ],
                     ),
-                  ).animate().fadeIn();
-                }
-
-                return SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Popular homes section
-                      _buildSection(
-                        context,
-                        title: 'Popular homes in Jakarta',
-                        properties: filteredProperties
-                            .where((p) =>
-                                p.city == 'Menteng' || p.city == 'Kalibata')
-                            .toList(),
-                        delay: 400.ms,
-                      ),
-                      const SizedBox(height: 32),
-                      // Available this weekend section
-                      _buildSection(
-                        context,
-                        title: 'Available in Yogyakarta this weekend',
-                        properties: filteredProperties
-                            .where((p) =>
-                                p.city == 'Yogyakarta' || p.city == 'Ngaglik')
-                            .toList(),
-                        delay: 600.ms,
-                      ),
-                      const SizedBox(height: 100), // Space for bottom nav
-                    ],
-                  ),
-                );
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, st) => Center(child: Text('Error: $e')),
-            ),
+                  ).animate().fadeIn(delay: 500.ms).slideX(begin: 0.1, end: 0),
+                ],
+              );
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, st) => Center(child: Text('Error: $e')),
           ),
         ],
       ),
@@ -215,7 +243,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              Icon(Icons.arrow_forward_ios, size: 16, color: Colors.black),
+              Icon(LucideIcons.chevronRight, size: 16, color: Colors.black),
             ],
           ),
         ).animate().fadeIn(delay: delay).slideX(begin: -0.1, end: 0),

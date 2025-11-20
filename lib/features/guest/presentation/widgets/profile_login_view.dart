@@ -36,10 +36,9 @@ class ProfileLoginView extends StatelessWidget {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () => LoginModal.show(context),
+                      onPressed: () => showLoginModal(context),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            Colors.black, // Black button for profile
+                        backgroundColor: Colors.black,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(

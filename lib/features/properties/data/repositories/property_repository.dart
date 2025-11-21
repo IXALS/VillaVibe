@@ -25,6 +25,18 @@ class PropertyRepository {
       amenities: property.amenities,
       images: property.images,
       rating: property.rating,
+      hostName: property.hostName,
+      hostAvatar: property.hostAvatar,
+      hostYearsHosting: property.hostYearsHosting,
+      reviewsCount: property.reviewsCount,
+      reviews: property.reviews,
+      hostWork: property.hostWork,
+      hostDescription: property.hostDescription,
+      hostResponseRate: property.hostResponseRate,
+      hostResponseTime: property.hostResponseTime,
+      cancellationPolicy: property.cancellationPolicy,
+      houseRules: property.houseRules,
+      safetyItems: property.safetyItems,
     );
     await docRef.set(newProperty.toMap());
   }
@@ -63,4 +75,9 @@ Stream<List<Property>> hostProperties(HostPropertiesRef ref, String hostId) {
 @riverpod
 Stream<List<Property>> allProperties(AllPropertiesRef ref) {
   return ref.watch(propertyRepositoryProvider).getAllProperties();
+}
+
+@riverpod
+Future<Property?> property(PropertyRef ref, String id) {
+  return ref.watch(propertyRepositoryProvider).getProperty(id);
 }

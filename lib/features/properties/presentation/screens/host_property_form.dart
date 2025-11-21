@@ -206,6 +206,11 @@ class _HostPropertyFormState extends ConsumerState<HostPropertyForm> {
       ),
       amenities: _selectedAmenities,
       images: _images, // TODO: Implement Image Upload
+      rating: 0.0,
+      hostName: 'Host', // Default or fetch from user profile
+      hostAvatar: '',
+      hostYearsHosting: 0,
+      reviewsCount: 0,
     );
 
     await ref.read(propertyRepositoryProvider).addProperty(property);

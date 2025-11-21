@@ -1,5 +1,45 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+class Review {
+  final String id;
+  final String authorName;
+  final String authorAvatar;
+  final double rating;
+  final String content;
+  final DateTime date;
+
+  Review({
+    required this.id,
+    required this.authorName,
+    required this.authorAvatar,
+    required this.rating,
+    required this.content,
+    required this.date,
+  });
+
+  factory Review.fromMap(Map<String, dynamic> map) {
+    return Review(
+      id: map['id'] ?? '',
+      authorName: map['authorName'] ?? '',
+      authorAvatar: map['authorAvatar'] ?? '',
+      rating: (map['rating'] ?? 0.0).toDouble(),
+      content: map['content'] ?? '',
+      date: DateTime.parse(map['date']),
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'authorName': authorName,
+      'authorAvatar': authorAvatar,
+      'rating': rating,
+      'content': content,
+      'date': date.toIso8601String(),
+    };
+  }
+}
+
 class Property {
   final String id;
   final String hostId;
@@ -12,6 +52,18 @@ class Property {
   final List<String> amenities;
   final List<String> images;
   final double rating;
+  final String hostName;
+  final String hostAvatar;
+  final int hostYearsHosting;
+  final int reviewsCount;
+  final List<Review> reviews;
+  final String hostWork;
+  final String hostDescription;
+  final String hostResponseRate;
+  final String hostResponseTime;
+  final String cancellationPolicy;
+  final List<String> houseRules;
+  final List<String> safetyItems;
 
   Property({
     required this.id,
@@ -24,7 +76,19 @@ class Property {
     required this.specs,
     required this.amenities,
     required this.images,
-    this.rating = 0.0,
+    required this.rating,
+    required this.hostName,
+    required this.hostAvatar,
+    required this.hostYearsHosting,
+    required this.reviewsCount,
+    this.reviews = const [],
+    this.hostWork = '',
+    this.hostDescription = '',
+    this.hostResponseRate = '',
+    this.hostResponseTime = '',
+    this.cancellationPolicy = '',
+    this.houseRules = const [],
+    this.safetyItems = const [],
   });
 
   factory Property.fromFirestore(DocumentSnapshot doc) {
@@ -41,6 +105,21 @@ class Property {
       amenities: List<String>.from(data['amenities'] ?? []),
       images: List<String>.from(data['images'] ?? []),
       rating: (data['rating'] ?? 0.0).toDouble(),
+      hostName: data['hostName'] ?? '',
+      hostAvatar: data['hostAvatar'] ?? '',
+      hostYearsHosting: data['hostYearsHosting'] ?? 0,
+      reviewsCount: data['reviewsCount'] ?? 0,
+      reviews: (data['reviews'] as List<dynamic>?)
+              ?.map((e) => Review.fromMap(e))
+              .toList() ??
+          [],
+      hostWork: data['hostWork'] ?? '',
+      hostDescription: data['hostDescription'] ?? '',
+      hostResponseRate: data['hostResponseRate'] ?? '',
+      hostResponseTime: data['hostResponseTime'] ?? '',
+      cancellationPolicy: data['cancellationPolicy'] ?? '',
+      houseRules: List<String>.from(data['houseRules'] ?? []),
+      safetyItems: List<String>.from(data['safetyItems'] ?? []),
     );
   }
 
@@ -56,6 +135,18 @@ class Property {
       'amenities': amenities,
       'images': images,
       'rating': rating,
+      'hostName': hostName,
+      'hostAvatar': hostAvatar,
+      'hostYearsHosting': hostYearsHosting,
+      'reviewsCount': reviewsCount,
+      'reviews': reviews.map((e) => e.toMap()).toList(),
+      'hostWork': hostWork,
+      'hostDescription': hostDescription,
+      'hostResponseRate': hostResponseRate,
+      'hostResponseTime': hostResponseTime,
+      'cancellationPolicy': cancellationPolicy,
+      'houseRules': houseRules,
+      'safetyItems': safetyItems,
     };
   }
 }

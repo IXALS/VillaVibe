@@ -6,6 +6,8 @@ import 'package:villavibe/features/properties/domain/models/property.dart';
 import 'package:villavibe/features/properties/data/repositories/property_repository.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
+import 'package:villavibe/features/auth/data/repositories/auth_repository.dart';
 
 class VillaDetailScreen extends ConsumerWidget {
   final String propertyId;
@@ -15,6 +17,7 @@ class VillaDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final propertyAsync = ref.watch(propertyProvider(propertyId));
+    final authState = ref.watch(authStateProvider);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -29,7 +32,8 @@ class VillaDetailScreen extends ConsumerWidget {
         error: (err, stack) => Center(child: Text('Error: $err')),
       ),
       bottomNavigationBar: propertyAsync.value != null
-          ? _buildBottomBar(context, propertyAsync.value!)
+          ? _buildBottomBar(
+              context, propertyAsync.value!, authState.value != null)
           : null,
     );
   }
@@ -805,7 +809,8 @@ class VillaDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildBottomBar(BuildContext context, Property property) {
+  Widget _buildBottomBar(
+      BuildContext context, Property property, bool isLoggedIn) {
     final currencyFormat = NumberFormat.currency(
       locale: 'id_ID',
       symbol: 'Rp',
@@ -844,7 +849,13 @@ class VillaDetailScreen extends ConsumerWidget {
             ),
             const Spacer(),
             ElevatedButton(
-              onPressed: () => showLoginModal(context),
+              onPressed: () {
+                if (isLoggedIn) {
+                  context.push('/booking', extra: property);
+                } else {
+                  showLoginModal(context);
+                }
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFE91E63), // Pink/Red
                 foregroundColor: Colors.white,

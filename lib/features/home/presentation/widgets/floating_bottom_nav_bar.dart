@@ -35,6 +35,7 @@ class FloatingBottomNavBar extends StatelessWidget {
           _buildNavItem(2, Icons.book_outlined, Icons.book, 'Bookings'),
           _buildNavItem(
               3, Icons.chat_bubble_outline, Icons.chat_bubble, 'Messages'),
+          _buildNavItem(4, Icons.person_outline, Icons.person, 'Profile'),
         ],
       ),
     )

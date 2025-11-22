@@ -60,7 +60,7 @@ class Villa {
   final String id;
   final String name;
   final String locationName;
-  final double pricePerNight;
+  final int pricePerNight;
   final double latitude;
   final double longitude;
 

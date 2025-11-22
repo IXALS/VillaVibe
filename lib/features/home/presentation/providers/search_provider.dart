@@ -53,7 +53,6 @@ class SearchFilterState extends _$SearchFilterState {
   }
 
   void setQuery(String query) {
-    print('SearchFilterState: setQuery called with "$query"');
 
     state = state.copyWith(query: query, isFilterActive: true);
   }

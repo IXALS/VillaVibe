@@ -109,11 +109,6 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
           // Hero Section
           HomeHeroSection(
             user: ref.watch(currentUserProvider).value,
-            onProfileTap: () {
-              setState(() {
-                _currentNavIndex = 4; // Switch to Profile tab
-              });
-            },
             onSearchTap: () {
               WoltModalSheet.show(
                 context: context,

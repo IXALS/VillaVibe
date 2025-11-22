@@ -6,13 +6,11 @@ import 'package:villavibe/features/home/presentation/widgets/home_search_contain
 
 class HomeHeroSection extends StatelessWidget {
   final VoidCallback onSearchTap;
-  final VoidCallback onProfileTap;
   final AppUser? user;
 
   const HomeHeroSection({
     super.key,
     required this.onSearchTap,
-    required this.onProfileTap,
     this.user,
   });
 
@@ -90,18 +88,6 @@ class HomeHeroSection extends StatelessWidget {
                           ),
                         ),
                       ],
-                    ),
-                    GestureDetector(
-                      onTap: onProfileTap,
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 1.5),
-                        ),
-                        child: const Icon(LucideIcons.user,
-                            color: Colors.white, size: 16),
-                      ),
                     ),
                   ],
                 ),

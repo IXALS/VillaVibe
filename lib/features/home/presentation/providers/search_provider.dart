@@ -54,8 +54,7 @@ class SearchFilterState extends _$SearchFilterState {
 
   void setQuery(String query) {
     print('SearchFilterState: setQuery called with "$query"');
-    // If query is empty, we might want to keep isFilterActive true if price is changed?
-    // But for now, let's just set it.
+
     state = state.copyWith(query: query, isFilterActive: true);
   }
 

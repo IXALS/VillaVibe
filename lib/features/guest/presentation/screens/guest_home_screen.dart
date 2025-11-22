@@ -124,20 +124,19 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
             ),
 
           // Bottom Nav (hidden when search is active)
-          if (!_isSearchActive)
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: FloatingBottomNavBar(
-                currentIndex: _currentNavIndex,
-                onTap: (index) {
-                  setState(() {
-                    _currentNavIndex = index;
-                  });
-                },
-              ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: FloatingBottomNavBar(
+              currentIndex: _currentNavIndex,
+              onTap: (index) {
+                setState(() {
+                  _currentNavIndex = index;
+                });
+              },
             ),
+          ),
         ],
       ),
     );

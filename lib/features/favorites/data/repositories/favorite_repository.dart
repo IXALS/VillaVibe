@@ -18,16 +18,21 @@ class FavoriteRepository {
 
     final userRef = _firestore.collection('users').doc(user.uid);
     
-    if (user.savedVillas.contains(villaId)) {
-      // Hapus dari wishlist
-      await userRef.update({
-        'savedVillas': FieldValue.arrayRemove([villaId])
-      });
-    } else {
-      // Tambah ke wishlist
-      await userRef.update({
-        'savedVillas': FieldValue.arrayUnion([villaId])
-      });
+    try {
+      if (user.savedVillas.contains(villaId)) {
+        // Hapus dari wishlist
+        await userRef.update({
+          'savedVillas': FieldValue.arrayRemove([villaId])
+        });
+      } else {
+        // Tambah ke wishlist
+        await userRef.update({
+          'savedVillas': FieldValue.arrayUnion([villaId])
+        });
+      }
+    } catch (e, stack) {
+      print('Error toggling favorite for villaId $villaId: $e');
+      print(stack);
     }
   }
 }

@@ -48,7 +48,6 @@ class SearchFilter {
 class SearchFilterState extends _$SearchFilterState {
   @override
   SearchFilter build() {
-    print('SearchFilterState: build called (init/reset)');
     return const SearchFilter();
   }
 

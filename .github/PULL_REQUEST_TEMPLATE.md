@@ -1,5 +1,5 @@
 ## Deskripsi
-Mengimplementasikan sistem backend dan UI untuk fitur Favorites (Wishlist). User sekarang bisa menekan tombol "Love" pada kartu Villa untuk menyimpannya ke daftar favorit mereka di database (Firestore). Tombol juga otomatis mendeteksi status login user.
+*Jelaskan secara singkat perubahan yang dilakukan pada PR ini.*
 
 ## Issue Terkait
 *Sebutkan nomor issue yang diselesaikan oleh PR ini (contoh: Fixes #12, Closes #45).*

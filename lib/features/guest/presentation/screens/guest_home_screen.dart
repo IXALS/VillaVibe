@@ -123,8 +123,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
               ),
             ),
 
-          // Bottom Nav (hide when search is active?)
-          // Let's keep it for now, or hide it if keyboard is up (handled by OS usually)
+          // Bottom Nav (hidden when search is active)
           if (!_isSearchActive)
             Positioned(
               left: 0,

@@ -7,7 +7,7 @@ part of 'search_provider.dart';
 // **************************************************************************
 
 String _$filteredPropertiesHash() =>
-    r'ff184873ccc5cceba06cf8006e963fbf70dc71b1';
+    r'61af34e2f79b949d3a80cbda2061d78bdb4049c6';
 
 /// See also [filteredProperties].
 @ProviderFor(filteredProperties)
@@ -23,7 +23,7 @@ final filteredPropertiesProvider =
 );
 
 typedef FilteredPropertiesRef = AutoDisposeFutureProviderRef<List<Property>>;
-String _$searchFilterStateHash() => r'8a328a8421833489b23e5040d940131487287815';
+String _$searchFilterStateHash() => r'db0313076ea8a269170f7af4e535197085e9d394';
 
 /// See also [SearchFilterState].
 @ProviderFor(SearchFilterState)

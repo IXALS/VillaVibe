@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:villavibe/features/properties/domain/models/property.dart';
+import 'package:villavibe/features/favorites/presentation/widgets/favorite_button.dart';
 
 class PropertyCard extends StatelessWidget {
   final Property property;
@@ -57,12 +58,11 @@ class PropertyCard extends StatelessWidget {
                 // Favorite heart icon
                 if (showFavorite)
                   Positioned(
-                    top: 12,
-                    right: 12,
-                    child: Icon(
-                      LucideIcons.heart,
-                      size: 24,
-                      color: Colors.white,
+                    top: 8, // Sedikit disesuaikan biar pas
+                    right: 8,
+                    child: FavoriteButton(
+                      villaId: property.id, // Mengirim ID villa ke tombol
+                      color: Colors.white, // Warna outline/icon saat belum di-love
                     ),
                   ).animate().scale(delay: 200.ms),
               ],

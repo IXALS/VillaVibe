@@ -33,7 +33,10 @@ class VillaDetailScreen extends ConsumerWidget {
       ),
       bottomNavigationBar: propertyAsync.value != null
           ? _buildBottomBar(
-              context, propertyAsync.value!, authState.value != null)
+              context, propertyAsync.value!, authState.maybeWhen(
+                data: (user) => user != null,
+                orElse: () => false,
+              ))
           : null,
     );
   }

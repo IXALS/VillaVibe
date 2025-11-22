@@ -28,16 +28,34 @@ class SearchFilter {
       isFilterActive: isFilterActive ?? this.isFilterActive,
     );
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+
+    return other is SearchFilter &&
+        other.query == query &&
+        other.priceRange == priceRange &&
+        other.isFilterActive == isFilterActive;
+  }
+
+  @override
+  int get hashCode =>
+      query.hashCode ^ priceRange.hashCode ^ isFilterActive.hashCode;
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 class SearchFilterState extends _$SearchFilterState {
   @override
   SearchFilter build() {
+    print('SearchFilterState: build called (init/reset)');
     return const SearchFilter();
   }
 
   void setQuery(String query) {
+    print('SearchFilterState: setQuery called with "$query"');
+    // If query is empty, we might want to keep isFilterActive true if price is changed?
+    // But for now, let's just set it.
     state = state.copyWith(query: query, isFilterActive: true);
   }
 
@@ -46,6 +64,7 @@ class SearchFilterState extends _$SearchFilterState {
   }
 
   void reset() {
+    print('SearchFilterState: reset called');
     state = const SearchFilter();
   }
 }
@@ -55,14 +74,23 @@ Future<List<Property>> filteredProperties(FilteredPropertiesRef ref) async {
   final allProperties = await ref.watch(allPropertiesProvider.future);
   final filter = ref.watch(searchFilterStateProvider);
 
+  // Debug print
+  print(
+      'Filtering properties with query: "${filter.query}" and price: ${filter.priceRange}');
+
   if (!filter.isFilterActive && filter.query.isEmpty) {
     return allProperties;
   }
 
   return allProperties.where((property) {
-    final matchesQuery =
-        property.name.toLowerCase().contains(filter.query.toLowerCase()) ||
-            property.city.toLowerCase().contains(filter.query.toLowerCase());
+    // Case insensitive search
+    final query = filter.query.toLowerCase().trim();
+
+    bool matchesQuery = true;
+    if (query.isNotEmpty) {
+      matchesQuery = property.name.toLowerCase().contains(query) ||
+          property.city.toLowerCase().contains(query);
+    }
 
     final matchesPrice = property.pricePerNight >= filter.priceRange.start &&
         property.pricePerNight <= filter.priceRange.end;

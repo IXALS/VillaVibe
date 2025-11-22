@@ -10,7 +10,6 @@ class SearchFilterModal extends ConsumerStatefulWidget {
 }
 
 class _SearchFilterModalState extends ConsumerState<SearchFilterModal> {
-  late TextEditingController _searchController;
   late RangeValues _currentRangeValues;
 
   // Define min and max price constants
@@ -21,27 +20,18 @@ class _SearchFilterModalState extends ConsumerState<SearchFilterModal> {
   void initState() {
     super.initState();
     final filterState = ref.read(searchFilterStateProvider);
-    _searchController = TextEditingController(text: filterState.query);
 
     // Ensure range values are within bounds
     double start = filterState.priceRange.start.clamp(_minPrice, _maxPrice);
     double end = filterState.priceRange.end.clamp(_minPrice, _maxPrice);
-    if (end == 0 && start == 0)
+    if (end == 0 && start == 0) {
       end = _maxPrice; // Handle initial default case if needed
+    }
 
     _currentRangeValues = RangeValues(start, end);
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
   void _applyFilters() {
-    ref
-        .read(searchFilterStateProvider.notifier)
-        .setQuery(_searchController.text);
     ref
         .read(searchFilterStateProvider.notifier)
         .setPriceRange(_currentRangeValues);
@@ -50,10 +40,13 @@ class _SearchFilterModalState extends ConsumerState<SearchFilterModal> {
 
   void _resetFilters() {
     setState(() {
-      _searchController.clear();
       _currentRangeValues = const RangeValues(_minPrice, _maxPrice);
     });
-    ref.read(searchFilterStateProvider.notifier).reset();
+    // We don't want to reset the query here, only the filters in the modal
+    // So we manually set price range instead of calling reset() which clears everything
+    ref
+        .read(searchFilterStateProvider.notifier)
+        .setPriceRange(const RangeValues(_minPrice, _maxPrice));
   }
 
   @override
@@ -73,7 +66,7 @@ class _SearchFilterModalState extends ConsumerState<SearchFilterModal> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                'Search & Filter',
+                'Filters',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -85,22 +78,6 @@ class _SearchFilterModalState extends ConsumerState<SearchFilterModal> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
-
-          // Search Field
-          TextField(
-            controller: _searchController,
-            decoration: InputDecoration(
-              hintText: 'Search by name or city',
-              prefixIcon: const Icon(Icons.search),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              filled: true,
-              fillColor: Colors.grey[100],
-            ),
-          ),
-
           const SizedBox(height: 24),
 
           // Price Range

@@ -15,6 +15,9 @@ import 'package:villavibe/features/guest/presentation/widgets/authenticated_prof
 import 'package:villavibe/features/home/presentation/widgets/home_hero_section.dart';
 import 'package:villavibe/features/home/presentation/widgets/floating_bottom_nav_bar.dart';
 import 'package:villavibe/features/home/presentation/widgets/destination_card.dart';
+import 'package:villavibe/features/home/presentation/widgets/search_filter_modal.dart';
+import 'package:villavibe/features/home/presentation/widgets/top_search_bar.dart';
+import 'package:villavibe/features/home/presentation/providers/search_provider.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 class GuestHomeScreen extends ConsumerStatefulWidget {
@@ -26,17 +29,24 @@ class GuestHomeScreen extends ConsumerStatefulWidget {
 
 class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
   int _currentNavIndex = 0;
+  bool _isSearchActive = false;
 
   @override
   Widget build(BuildContext context) {
+    // Watch both providers
     final allPropertiesAsync = ref.watch(allPropertiesProvider);
+    final filteredPropertiesAsync = ref.watch(filteredPropertiesProvider);
+
     final userAsync = ref.watch(currentUserProvider);
     final user = userAsync.value;
 
     Widget buildBody() {
       switch (_currentNavIndex) {
         case 0: // Explore
-          return _buildExploreContent(allPropertiesAsync);
+          // Use filtered properties ONLY if search is active
+          return _buildExploreContent(
+            _isSearchActive ? filteredPropertiesAsync : allPropertiesAsync,
+          );
         case 1: // Wishlists
           if (user == null) {
             return const LoginPromptView(
@@ -73,7 +83,9 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
           }
           return const AuthenticatedProfileView();
         default:
-          return _buildExploreContent(allPropertiesAsync);
+          return _buildExploreContent(
+            _isSearchActive ? filteredPropertiesAsync : allPropertiesAsync,
+          );
       }
     }
 
@@ -82,6 +94,36 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
       body: Stack(
         children: [
           buildBody(),
+
+          // Top Search Bar (only visible when search is active)
+          if (_isSearchActive)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: TopSearchBar(
+                onBack: () {
+                  setState(() {
+                    _isSearchActive = false;
+                  });
+                  ref.read(searchFilterStateProvider.notifier).reset();
+                },
+                onFilterTap: () {
+                  WoltModalSheet.show(
+                    context: context,
+                    pageListBuilder: (modalSheetContext) {
+                      return [
+                        WoltModalSheetPage(
+                          child: const SearchFilterModal(),
+                        ),
+                      ];
+                    },
+                  );
+                },
+              ),
+            ),
+
+          // Bottom Nav (hidden when search is active)
           Positioned(
             left: 0,
             right: 0,
@@ -100,106 +142,129 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
     );
   }
 
-  Widget _buildExploreContent(AsyncValue<List<Property>> allPropertiesAsync) {
+  Widget _buildExploreContent(AsyncValue<List<Property>> propertiesAsync) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.only(bottom: 100), // Space for floating nav
+      padding: EdgeInsets.only(
+        top: _isSearchActive ? 100 : 0, // Add padding for search bar
+        bottom: 100, // Space for floating nav
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Hero Section
-          HomeHeroSection(
-            user: ref.watch(currentUserProvider).value,
-            onSearchTap: () {
-              WoltModalSheet.show(
-                context: context,
-                pageListBuilder: (modalSheetContext) {
-                  return [
-                    WoltModalSheetPage(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          children: [
-                            const Text('Search functionality coming soon'),
-                            const SizedBox(height: 20),
-                            ElevatedButton(
-                              onPressed: () =>
-                                  Navigator.of(modalSheetContext).pop(),
-                              child: const Text('Close'),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ];
-                },
-              );
-            },
-          ).animate().fadeIn(duration: 600.ms),
+          // Hero Section (Only show if search is NOT active)
+          if (!_isSearchActive)
+            HomeHeroSection(
+              user: ref.watch(currentUserProvider).value,
+              onSearchTap: () {
+                setState(() {
+                  _isSearchActive = true;
+                });
+              },
+            ).animate().fadeIn(duration: 600.ms),
 
           const SizedBox(height: 24),
 
           // Content
-          allPropertiesAsync.when(
+          propertiesAsync.when(
             data: (properties) {
-              // Filter by category (simplified for now as tabs are removed from hero)
-              // We can re-introduce tabs below hero if needed, but design shows "The most relevant" directly
+              if (properties.isEmpty) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32.0),
+                    child: Column(
+                      children: [
+                        const Icon(LucideIcons.searchX,
+                            size: 48, color: Colors.grey),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'No results found',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        TextButton(
+                          onPressed: () {
+                            // Clear filters but keep search active if they want to try another query
+                            // Or maybe just clear query?
+                            ref
+                                .read(searchFilterStateProvider.notifier)
+                                .reset();
+                            // If we reset, we might want to exit search mode too?
+                            // Let's just clear filters for now.
+                          },
+                          child: const Text('Clear Filters'),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // "The most relevant" section
+                  // "The most relevant" section (or "Search Results" if active)
                   _buildSection(
                     context,
-                    title: 'The most relevant',
-                    properties: properties
-                        .take(5)
-                        .toList(), // Just take first 5 for now
+                    title: _isSearchActive
+                        ? 'Search Results'
+                        : 'The most relevant',
+                    properties: properties,
                     delay: 200.ms,
                   ),
 
                   const SizedBox(height: 32),
 
-                  // "Discover new places" section
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: const Text(
-                      'Discover new places',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ).animate().fadeIn(delay: 400.ms).slideX(begin: -0.1, end: 0),
-
-                  const SizedBox(height: 16),
-
-                  SizedBox(
-                    height: 180,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
+                  // "Discover new places" section - Hide if search is active
+                  if (!_isSearchActive) ...[
+                    Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      children: [
-                        DestinationCard(
-                          imageUrl:
-                              'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?q=80&w=1972&auto=format&fit=crop', // Cinque Terre
-                          title: 'Cinque Terre',
-                          onTap: () {},
+                      child: const Text(
+                        'Discover new places',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w600,
                         ),
-                        DestinationCard(
-                          imageUrl:
-                              'https://images.unsplash.com/photo-1506953823976-52e1fdc0149a?q=80&w=1935&auto=format&fit=crop', // Beach
-                          title: 'Bali',
-                          onTap: () {},
-                        ),
-                        DestinationCard(
-                          imageUrl:
-                              'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=2070&auto=format&fit=crop', // Mountains
-                          title: 'Swiss Alps',
-                          onTap: () {},
-                        ),
-                      ],
-                    ),
-                  ).animate().fadeIn(delay: 500.ms).slideX(begin: 0.1, end: 0),
+                      ),
+                    )
+                        .animate()
+                        .fadeIn(delay: 400.ms)
+                        .slideX(begin: -0.1, end: 0),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      height: 180,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        children: [
+                          DestinationCard(
+                            imageUrl:
+                                'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?q=80&w=1972&auto=format&fit=crop', // Cinque Terre
+                            title: 'Cinque Terre',
+                            onTap: () {},
+                          ),
+                          DestinationCard(
+                            imageUrl:
+                                'https://images.unsplash.com/photo-1506953823976-52e1fdc0149a?q=80&w=1935&auto=format&fit=crop', // Beach
+                            title: 'Bali',
+                            onTap: () {},
+                          ),
+                          DestinationCard(
+                            imageUrl:
+                                'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=2070&auto=format&fit=crop', // Mountains
+                            title: 'Swiss Alps',
+                            onTap: () {},
+                          ),
+                        ],
+                      ),
+                    )
+                        .animate()
+                        .fadeIn(delay: 500.ms)
+                        .slideX(begin: 0.1, end: 0),
+                  ],
                 ],
               );
             },
@@ -237,32 +302,59 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const SizedBox(width: 8),
-              Icon(LucideIcons.chevronRight, size: 16, color: Colors.black),
+              if (!_isSearchActive) ...[
+                const SizedBox(width: 8),
+                Icon(LucideIcons.chevronRight, size: 16, color: Colors.black),
+              ],
             ],
           ),
         ).animate().fadeIn(delay: delay).slideX(begin: -0.1, end: 0),
         const SizedBox(height: 16),
-        SizedBox(
-          height: 360,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: properties.length,
-            itemBuilder: (context, index) {
-              final property = properties[index];
-              return PropertyCard(
-                property: property,
-                onTap: () {
-                  context.push('/property/${property.id}', extra: property);
+        // If search is active, use vertical list, otherwise horizontal
+        _isSearchActive
+            ? ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: properties.length,
+                itemBuilder: (context, index) {
+                  final property = properties[index];
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 16.0),
+                    child: PropertyCard(
+                      property: property,
+                      onTap: () {
+                        context.push('/property/${property.id}',
+                            extra: property);
+                      },
+                    ),
+                  )
+                      .animate()
+                      .fadeIn(delay: delay + (100 * index).ms)
+                      .slideX(begin: 0.1, end: 0);
                 },
               )
-                  .animate()
-                  .fadeIn(delay: delay + (100 * index).ms)
-                  .slideX(begin: 0.1, end: 0);
-            },
-          ),
-        ),
+            : SizedBox(
+                height: 360,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: properties.length,
+                  itemBuilder: (context, index) {
+                    final property = properties[index];
+                    return PropertyCard(
+                      property: property,
+                      onTap: () {
+                        context.push('/property/${property.id}',
+                            extra: property);
+                      },
+                    )
+                        .animate()
+                        .fadeIn(delay: delay + (100 * index).ms)
+                        .slideX(begin: 0.1, end: 0);
+                  },
+                ),
+              ),
       ],
     );
   }

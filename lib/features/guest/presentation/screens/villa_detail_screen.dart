@@ -33,7 +33,9 @@ class VillaDetailScreen extends ConsumerWidget {
       ),
       bottomNavigationBar: propertyAsync.value != null
           ? _buildBottomBar(
-              context, propertyAsync.value!, authState.maybeWhen(
+              context,
+              propertyAsync.value!,
+              authState.maybeWhen(
                 data: (user) => user != null,
                 orElse: () => false,
               ))
@@ -116,11 +118,14 @@ class VillaDetailScreen extends ConsumerWidget {
         background: Stack(
           fit: StackFit.expand,
           children: [
-            Image.network(
-              property.images.isNotEmpty ? property.images.first : '',
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(color: Colors.grey[200]),
-            ),
+            property.images.isNotEmpty
+                ? Image.network(
+                    property.images.first,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) =>
+                        Container(color: Colors.grey[200]),
+                  )
+                : Container(color: Colors.grey[200]),
             Positioned(
               bottom: 16,
               right: 16,
@@ -440,7 +445,13 @@ class VillaDetailScreen extends ConsumerWidget {
               Row(
                 children: [
                   CircleAvatar(
-                    backgroundImage: NetworkImage(firstReview.authorAvatar),
+                    backgroundImage: firstReview.authorAvatar.isNotEmpty
+                        ? NetworkImage(firstReview.authorAvatar)
+                        : null,
+                    child: firstReview.authorAvatar.isEmpty
+                        ? const Icon(LucideIcons.user,
+                            size: 20, color: Colors.grey)
+                        : null,
                   ),
                   const SizedBox(width: 12),
                   Column(
@@ -551,7 +562,13 @@ class VillaDetailScreen extends ConsumerWidget {
                     children: [
                       CircleAvatar(
                         radius: 40,
-                        backgroundImage: NetworkImage(property.hostAvatar),
+                        backgroundImage: property.hostAvatar.isNotEmpty
+                            ? NetworkImage(property.hostAvatar)
+                            : null,
+                        child: property.hostAvatar.isEmpty
+                            ? const Icon(LucideIcons.user,
+                                size: 40, color: Colors.grey)
+                            : null,
                       ),
                       Container(
                         padding: const EdgeInsets.all(4),
@@ -784,28 +801,46 @@ class VillaDetailScreen extends ConsumerWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             color: Colors.grey[200],
-            image: const DecorationImage(
-              image: NetworkImage(
-                  'https://maps.googleapis.com/maps/api/staticmap?center=-6.2088,106.8456&zoom=13&size=600x300&key=YOUR_API_KEY_HERE'), // Placeholder static map
-              fit: BoxFit.cover,
-            ),
           ),
-          child: Center(
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 8,
-                    offset: Offset(0, 4),
-                  ),
-                ],
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.network(
+                  'https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=2074&auto=format&fit=crop', // Placeholder map image
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color: Colors.grey[300],
+                      child: const Center(
+                        child:
+                            Icon(LucideIcons.map, color: Colors.grey, size: 48),
+                      ),
+                    );
+                  },
+                ),
               ),
-              child: const Icon(LucideIcons.home, color: Colors.black),
-            ),
+              // TODO: Replace with real Google Maps implementation using a valid API key
+              // 'https://maps.googleapis.com/maps/api/staticmap?center=-6.2088,106.8456&zoom=13&size=600x300&key=YOUR_API_KEY_HERE'
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 8,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(LucideIcons.home, color: Colors.black),
+                ),
+              ),
+            ],
           ),
         ),
       ],

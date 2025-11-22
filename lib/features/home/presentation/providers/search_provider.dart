@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:villavibe/features/home/presentation/constants/search_constants.dart';
 import 'package:villavibe/features/properties/data/repositories/property_repository.dart';
 import 'package:villavibe/features/properties/domain/models/property.dart';
 
@@ -12,8 +13,7 @@ class SearchFilter {
 
   const SearchFilter({
     this.query = '',
-    this.priceRange =
-        const RangeValues(0, 10000), // Default max price high enough
+    this.priceRange = SearchConstants.defaultPriceRange,
     this.isFilterActive = false,
   });
 

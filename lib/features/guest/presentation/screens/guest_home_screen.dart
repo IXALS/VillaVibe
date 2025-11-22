@@ -18,6 +18,7 @@ import 'package:villavibe/features/home/presentation/widgets/destination_card.da
 import 'package:villavibe/features/home/presentation/widgets/search_filter_modal.dart';
 import 'package:villavibe/features/home/presentation/widgets/top_search_bar.dart';
 import 'package:villavibe/features/home/presentation/providers/search_provider.dart';
+import 'package:villavibe/features/favorites/presentation/screens/wishlist_screen.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 class GuestHomeScreen extends ConsumerStatefulWidget {
@@ -56,7 +57,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                   'You can create, view, or edit wishlists once you\'ve logged in.',
             );
           }
-          return const Center(child: Text('Wishlists (Logged In)'));
+          return const WishlistScreen();
         case 2: // Trips
           if (user == null) {
             return const LoginPromptView(

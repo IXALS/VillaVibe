@@ -71,9 +71,7 @@ Future<List<Property>> filteredProperties(FilteredPropertiesRef ref) async {
   final allProperties = await ref.watch(allPropertiesProvider.future);
   final filter = ref.watch(searchFilterStateProvider);
 
-  // Debug print
-  print(
-      'Filtering properties with query: "${filter.query}" and price: ${filter.priceRange}');
+  
 
   if (!filter.isFilterActive && filter.query.isEmpty) {
     return allProperties;

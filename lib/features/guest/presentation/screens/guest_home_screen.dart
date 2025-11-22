@@ -106,7 +106,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                   setState(() {
                     _isSearchActive = false;
                   });
-                  ref.read(searchFilterStateProvider.notifier).setQuery('');
+                  ref.read(searchFilterStateProvider.notifier).reset();
                 },
                 onFilterTap: () {
                   WoltModalSheet.show(

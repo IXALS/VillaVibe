@@ -63,7 +63,6 @@ class SearchFilterState extends _$SearchFilterState {
   }
 
   void reset() {
-    print('SearchFilterState: reset called');
     state = const SearchFilter();
   }
 }

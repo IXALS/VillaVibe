@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:villavibe/features/home/presentation/constants/search_constants.dart';
 import 'package:villavibe/features/home/presentation/providers/search_provider.dart';
 
 class SearchFilterModal extends ConsumerStatefulWidget {
@@ -12,20 +13,18 @@ class SearchFilterModal extends ConsumerStatefulWidget {
 class _SearchFilterModalState extends ConsumerState<SearchFilterModal> {
   late RangeValues _currentRangeValues;
 
-  // Define min and max price constants
-  static const double _minPrice = 0;
-  static const double _maxPrice = 3000;
-
   @override
   void initState() {
     super.initState();
     final filterState = ref.read(searchFilterStateProvider);
 
     // Ensure range values are within bounds
-    double start = filterState.priceRange.start.clamp(_minPrice, _maxPrice);
-    double end = filterState.priceRange.end.clamp(_minPrice, _maxPrice);
+    double start = filterState.priceRange.start.clamp(
+        SearchConstants.minPrice, SearchConstants.maxPrice);
+    double end = filterState.priceRange.end.clamp(
+        SearchConstants.minPrice, SearchConstants.maxPrice);
     if (end == 0 && start == 0) {
-      end = _maxPrice; // Handle initial default case if needed
+      end = SearchConstants.maxPrice; // Handle initial default case if needed
     }
 
     _currentRangeValues = RangeValues(start, end);
@@ -40,13 +39,13 @@ class _SearchFilterModalState extends ConsumerState<SearchFilterModal> {
 
   void _resetFilters() {
     setState(() {
-      _currentRangeValues = const RangeValues(_minPrice, _maxPrice);
+      _currentRangeValues = SearchConstants.defaultPriceRange;
     });
     // We don't want to reset the query here, only the filters in the modal
     // So we manually set price range instead of calling reset() which clears everything
     ref
         .read(searchFilterStateProvider.notifier)
-        .setPriceRange(const RangeValues(_minPrice, _maxPrice));
+        .setPriceRange(SearchConstants.defaultPriceRange);
   }
 
   @override
@@ -91,8 +90,8 @@ class _SearchFilterModalState extends ConsumerState<SearchFilterModal> {
           const SizedBox(height: 8),
           RangeSlider(
             values: _currentRangeValues,
-            min: _minPrice,
-            max: _maxPrice,
+            min: SearchConstants.minPrice,
+            max: SearchConstants.maxPrice,
             divisions: 20,
             labels: RangeLabels(
               '\$${_currentRangeValues.start.round()}',

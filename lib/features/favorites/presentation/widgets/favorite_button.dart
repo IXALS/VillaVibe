@@ -7,10 +7,11 @@ import 'package:villavibe/features/auth/presentation/widgets/login_modal.dart';
 
 class FavoriteButton extends ConsumerWidget {
   final String villaId;
-  final Color color; // Supaya bisa dipakai di Card (Putih) atau Detail (Hitam/Merah)
+  final Color
+      color; // Supaya bisa dipakai di Card (Putih) atau Detail (Hitam/Merah)
 
   const FavoriteButton({
-    super.key, 
+    super.key,
     required this.villaId,
     this.color = Colors.white,
   });
@@ -25,16 +26,17 @@ class FavoriteButton extends ConsumerWidget {
 
         return IconButton(
           icon: Icon(
-            isFavorite ? LucideIcons.heart : LucideIcons.heart,
-            fill: isFavorite ? Colors.red : null, // Kalau like, isi merah
-            color: isFavorite ? Colors.red : color, // Outline merah atau putih/hitam
+            isFavorite ? Icons.favorite : Icons.favorite_border,
+            color: isFavorite ? Colors.red : color,
           ),
           onPressed: () async {
             if (user == null) {
               showLoginModal(context); // Kalau belum login, suruh login
             } else {
               // Panggil fungsi repository yang kita buat tadi
-              await ref.read(favoriteRepositoryProvider).toggleFavorite(villaId);
+              await ref
+                  .read(favoriteRepositoryProvider)
+                  .toggleFavorite(villaId);
               // Karena kita pakai stream di authState, UI akan update otomatis!
             }
           },

@@ -86,7 +86,6 @@ class _TopSearchBarState extends ConsumerState<TopSearchBar> {
                 controller: _controller,
                 focusNode: _focusNode,
                 onChanged: (value) {
-                  print('TopSearchBar: onChanged called with "$value"');
                   ref.read(searchFilterStateProvider.notifier).setQuery(value);
                 },
                 decoration: const InputDecoration(

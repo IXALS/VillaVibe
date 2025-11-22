@@ -1,0 +1,72 @@
+import 'package:flutter/material.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:villavibe/features/properties/data/repositories/property_repository.dart';
+import 'package:villavibe/features/properties/domain/models/property.dart';
+
+part 'search_provider.g.dart';
+
+class SearchFilter {
+  final String query;
+  final RangeValues priceRange;
+  final bool isFilterActive;
+
+  const SearchFilter({
+    this.query = '',
+    this.priceRange =
+        const RangeValues(0, 10000), // Default max price high enough
+    this.isFilterActive = false,
+  });
+
+  SearchFilter copyWith({
+    String? query,
+    RangeValues? priceRange,
+    bool? isFilterActive,
+  }) {
+    return SearchFilter(
+      query: query ?? this.query,
+      priceRange: priceRange ?? this.priceRange,
+      isFilterActive: isFilterActive ?? this.isFilterActive,
+    );
+  }
+}
+
+@riverpod
+class SearchFilterState extends _$SearchFilterState {
+  @override
+  SearchFilter build() {
+    return const SearchFilter();
+  }
+
+  void setQuery(String query) {
+    state = state.copyWith(query: query, isFilterActive: true);
+  }
+
+  void setPriceRange(RangeValues range) {
+    state = state.copyWith(priceRange: range, isFilterActive: true);
+  }
+
+  void reset() {
+    state = const SearchFilter();
+  }
+}
+
+@riverpod
+Future<List<Property>> filteredProperties(FilteredPropertiesRef ref) async {
+  final allProperties = await ref.watch(allPropertiesProvider.future);
+  final filter = ref.watch(searchFilterStateProvider);
+
+  if (!filter.isFilterActive && filter.query.isEmpty) {
+    return allProperties;
+  }
+
+  return allProperties.where((property) {
+    final matchesQuery =
+        property.name.toLowerCase().contains(filter.query.toLowerCase()) ||
+            property.city.toLowerCase().contains(filter.query.toLowerCase());
+
+    final matchesPrice = property.pricePerNight >= filter.priceRange.start &&
+        property.pricePerNight <= filter.priceRange.end;
+
+    return matchesQuery && matchesPrice;
+  }).toList();
+}

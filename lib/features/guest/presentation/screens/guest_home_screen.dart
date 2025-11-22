@@ -15,6 +15,8 @@ import 'package:villavibe/features/guest/presentation/widgets/authenticated_prof
 import 'package:villavibe/features/home/presentation/widgets/home_hero_section.dart';
 import 'package:villavibe/features/home/presentation/widgets/floating_bottom_nav_bar.dart';
 import 'package:villavibe/features/home/presentation/widgets/destination_card.dart';
+import 'package:villavibe/features/home/presentation/widgets/search_filter_modal.dart';
+import 'package:villavibe/features/home/presentation/providers/search_provider.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 class GuestHomeScreen extends ConsumerStatefulWidget {
@@ -29,14 +31,15 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final allPropertiesAsync = ref.watch(allPropertiesProvider);
+    // Use filtered properties instead of all properties
+    final filteredPropertiesAsync = ref.watch(filteredPropertiesProvider);
     final userAsync = ref.watch(currentUserProvider);
     final user = userAsync.value;
 
     Widget buildBody() {
       switch (_currentNavIndex) {
         case 0: // Explore
-          return _buildExploreContent(allPropertiesAsync);
+          return _buildExploreContent(filteredPropertiesAsync);
         case 1: // Wishlists
           if (user == null) {
             return const LoginPromptView(
@@ -73,7 +76,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
           }
           return const AuthenticatedProfileView();
         default:
-          return _buildExploreContent(allPropertiesAsync);
+          return _buildExploreContent(filteredPropertiesAsync);
       }
     }
 
@@ -100,7 +103,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
     );
   }
 
-  Widget _buildExploreContent(AsyncValue<List<Property>> allPropertiesAsync) {
+  Widget _buildExploreContent(AsyncValue<List<Property>> propertiesAsync) {
     return SingleChildScrollView(
       padding: const EdgeInsets.only(bottom: 100), // Space for floating nav
       child: Column(
@@ -115,20 +118,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                 pageListBuilder: (modalSheetContext) {
                   return [
                     WoltModalSheetPage(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          children: [
-                            const Text('Search functionality coming soon'),
-                            const SizedBox(height: 20),
-                            ElevatedButton(
-                              onPressed: () =>
-                                  Navigator.of(modalSheetContext).pop(),
-                              child: const Text('Close'),
-                            ),
-                          ],
-                        ),
-                      ),
+                      child: const SearchFilterModal(),
                     ),
                   ];
                 },
@@ -139,10 +129,39 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
           const SizedBox(height: 24),
 
           // Content
-          allPropertiesAsync.when(
+          propertiesAsync.when(
             data: (properties) {
-              // Filter by category (simplified for now as tabs are removed from hero)
-              // We can re-introduce tabs below hero if needed, but design shows "The most relevant" directly
+              if (properties.isEmpty) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32.0),
+                    child: Column(
+                      children: [
+                        const Icon(LucideIcons.searchX,
+                            size: 48, color: Colors.grey),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'No results found',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        TextButton(
+                          onPressed: () {
+                            ref
+                                .read(searchFilterStateProvider.notifier)
+                                .reset();
+                          },
+                          child: const Text('Clear Filters'),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -151,15 +170,15 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                   _buildSection(
                     context,
                     title: 'The most relevant',
-                    properties: properties
-                        .take(5)
-                        .toList(), // Just take first 5 for now
+                    properties: properties, // Show all filtered properties
                     delay: 200.ms,
                   ),
 
                   const SizedBox(height: 32),
 
-                  // "Discover new places" section
+                  // "Discover new places" section - Only show if not filtering or if relevant
+                  // For now, we keep it but maybe we should hide it if search is active?
+                  // Let's keep it for now as "Suggestions"
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: const Text(

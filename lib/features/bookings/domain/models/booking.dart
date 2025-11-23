@@ -8,7 +8,14 @@ class Booking {
   final DateTime startDate;
   final DateTime endDate;
   final int totalPrice;
-  final String status; // 'paid', 'cancelled', 'pending'
+  final String status; // 'paid', 'cancelled', 'pending', 'completed'
+  final String messageToHost;
+  final DateTime createdAt;
+
+  static const String statusPending = 'pending';
+  static const String statusPaid = 'paid';
+  static const String statusCancelled = 'cancelled';
+  static const String statusCompleted = 'completed';
 
   Booking({
     required this.id,
@@ -19,6 +26,8 @@ class Booking {
     required this.endDate,
     required this.totalPrice,
     required this.status,
+    this.messageToHost = '',
+    required this.createdAt,
   });
 
   factory Booking.fromFirestore(DocumentSnapshot doc) {
@@ -32,6 +41,10 @@ class Booking {
       endDate: (data['endDate'] as Timestamp).toDate(),
       totalPrice: data['totalPrice'] ?? 0,
       status: data['status'] ?? 'pending',
+      messageToHost: data['messageToHost'] ?? '',
+      createdAt: data['createdAt'] != null
+          ? (data['createdAt'] as Timestamp).toDate()
+          : DateTime.now(),
     );
   }
 
@@ -44,6 +57,8 @@ class Booking {
       'endDate': Timestamp.fromDate(endDate),
       'totalPrice': totalPrice,
       'status': status,
+      'messageToHost': messageToHost,
+      'createdAt': Timestamp.fromDate(createdAt),
     };
   }
 }

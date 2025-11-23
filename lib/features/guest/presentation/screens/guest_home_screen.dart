@@ -7,6 +7,8 @@ import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 import 'package:villavibe/core/presentation/widgets/property_card.dart';
 import 'package:villavibe/features/auth/data/repositories/auth_repository.dart';
+import 'package:villavibe/features/bookings/presentation/screens/my_bookings_screen.dart';
+import 'package:villavibe/features/favorites/presentation/screens/wishlist_screen.dart';
 import 'package:villavibe/features/guest/presentation/widgets/authenticated_profile_view.dart';
 import 'package:villavibe/features/guest/presentation/widgets/category_selector.dart';
 import 'package:villavibe/features/guest/presentation/widgets/login_prompt_view.dart';
@@ -21,7 +23,8 @@ import 'package:villavibe/features/properties/data/repositories/property_reposit
 import 'package:villavibe/features/properties/domain/models/property.dart';
 
 class GuestHomeScreen extends ConsumerStatefulWidget {
-  const GuestHomeScreen({super.key});
+  final int initialIndex;
+  const GuestHomeScreen({super.key, this.initialIndex = 0});
 
   @override
   ConsumerState<GuestHomeScreen> createState() => _GuestHomeScreenState();
@@ -30,6 +33,12 @@ class GuestHomeScreen extends ConsumerStatefulWidget {
 class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
   int _currentNavIndex = 0;
   bool _isSearchActive = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentNavIndex = widget.initialIndex;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +65,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                   'You can create, view, or edit wishlists once you\'ve logged in.',
             );
           }
-          return const Center(child: Text('Wishlists (Logged In)'));
+          return const WishlistScreen();
         case 2: // Trips
           if (user == null) {
             return const LoginPromptView(
@@ -66,7 +75,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                   'When you\'re ready to plan your next trip, we\'re here to help.',
             );
           }
-          return const Center(child: Text('Trips (Logged In)'));
+          return const MyBookingsScreen();
         case 3: // Messages
           if (user == null) {
             return const LoginPromptView(
@@ -308,7 +317,8 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
               ),
               if (!_isSearchActive) ...[
                 const SizedBox(width: 8),
-                const Icon(LucideIcons.chevronRight, size: 16, color: Colors.black),
+                const Icon(LucideIcons.chevronRight,
+                    size: 16, color: Colors.black),
               ],
             ],
           ),

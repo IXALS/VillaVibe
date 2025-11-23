@@ -9,7 +9,7 @@ class BookingRepository {
 
   BookingRepository(this._firestore);
 
-  Future<void> createBooking(Booking booking) async {
+  Future<String> createBooking(Booking booking) async {
     final docRef = _firestore.collection('bookings').doc();
     final newBooking = Booking(
       id: docRef.id,
@@ -20,8 +20,38 @@ class BookingRepository {
       endDate: booking.endDate,
       totalPrice: booking.totalPrice,
       status: booking.status,
+      messageToHost: booking.messageToHost,
+      createdAt: DateTime.now(),
     );
     await docRef.set(newBooking.toMap());
+    return docRef.id;
+  }
+
+  Future<void> updateBookingStatus(String bookingId, String status) async {
+    await _firestore.collection('bookings').doc(bookingId).update({
+      'status': status,
+    });
+  }
+
+  Future<Booking?> getBooking(String bookingId) async {
+    final doc = await _firestore.collection('bookings').doc(bookingId).get();
+    if (doc.exists) {
+      return Booking.fromFirestore(doc);
+    }
+    return null;
+  }
+
+  Stream<List<Booking>> getUserBookings(String userId) {
+    return _firestore
+        .collection('bookings')
+        .where('guestId', isEqualTo: userId)
+        .snapshots()
+        .map((snapshot) {
+      final bookings =
+          snapshot.docs.map((doc) => Booking.fromFirestore(doc)).toList();
+      bookings.sort((a, b) => b.startDate.compareTo(a.startDate));
+      return bookings;
+    });
   }
 
   Future<List<Booking>> getBookingsForProperty(String propertyId) async {

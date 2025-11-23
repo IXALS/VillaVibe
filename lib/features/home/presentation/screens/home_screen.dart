@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:villavibe/features/guest/presentation/screens/guest_home_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
-  const HomeScreen({super.key});
+  final int initialIndex;
+  const HomeScreen({super.key, this.initialIndex = 0});
 
   @override
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
@@ -15,6 +16,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     // We don't block the UI if user is null, we just show GuestHomeScreen
     // The modal will pop up on top.
-    return const GuestHomeScreen();
+    return GuestHomeScreen(initialIndex: widget.initialIndex);
   }
 }

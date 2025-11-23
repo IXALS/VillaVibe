@@ -1,3 +1,4 @@
+import 'package:villavibe/features/guest/presentation/widgets/category_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,7 +19,6 @@ import 'package:villavibe/features/home/presentation/widgets/destination_card.da
 import 'package:villavibe/features/home/presentation/widgets/search_filter_modal.dart';
 import 'package:villavibe/features/home/presentation/widgets/top_search_bar.dart';
 import 'package:villavibe/features/home/presentation/providers/search_provider.dart';
-import 'package:villavibe/features/favorites/presentation/screens/wishlist_screen.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 class GuestHomeScreen extends ConsumerStatefulWidget {
@@ -57,7 +57,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                   'You can create, view, or edit wishlists once you\'ve logged in.',
             );
           }
-          return const WishlistScreen();
+          return const Center(child: Text('Wishlists (Logged In)'));
         case 2: // Trips
           if (user == null) {
             return const LoginPromptView(
@@ -164,6 +164,10 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
             ).animate().fadeIn(duration: 600.ms),
 
           const SizedBox(height: 24),
+          if (!_isSearchActive) ...[
+            const CategorySelector(),
+            const SizedBox(height: 24),
+          ],
 
           // Content
           propertiesAsync.when(
@@ -221,9 +225,9 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
 
                   // "Discover new places" section - Hide if search is active
                   if (!_isSearchActive) ...[
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: const Text(
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
                         'Discover new places',
                         style: TextStyle(
                           fontSize: 22,
@@ -305,7 +309,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
               ),
               if (!_isSearchActive) ...[
                 const SizedBox(width: 8),
-                Icon(LucideIcons.chevronRight, size: 16, color: Colors.black),
+                const Icon(LucideIcons.chevronRight, size: 16, color: Colors.black),
               ],
             ],
           ),

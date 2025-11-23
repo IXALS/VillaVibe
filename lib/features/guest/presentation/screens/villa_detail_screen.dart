@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:villavibe/features/auth/presentation/widgets/login_modal.dart';
+import 'package:villavibe/features/favorites/presentation/widgets/favorite_button.dart';
 import 'package:villavibe/features/properties/domain/models/property.dart';
 import 'package:villavibe/features/properties/data/repositories/property_repository.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -107,9 +108,9 @@ class VillaDetailScreen extends ConsumerWidget {
         const SizedBox(width: 12),
         CircleAvatar(
           backgroundColor: Colors.white,
-          child: IconButton(
-            icon: const Icon(LucideIcons.heart, color: Colors.black, size: 20),
-            onPressed: () {},
+          child: FavoriteButton(
+            villaId: property.id,
+            color: Colors.black, // Icon hitam karena background-nya putih
           ),
         ).animate().fadeIn(delay: 400.ms),
         const SizedBox(width: 24),
@@ -291,7 +292,7 @@ class VillaDetailScreen extends ConsumerWidget {
             color: Color(0xFFF7F7F7),
             borderRadius: BorderRadius.all(Radius.circular(8)),
           ),
-          child: Column(
+          child: const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
@@ -318,9 +319,9 @@ class VillaDetailScreen extends ConsumerWidget {
           style: const TextStyle(fontSize: 16, height: 1.5),
         ),
         const SizedBox(height: 16),
-        Row(
+        const Row(
           children: [
-            const Text(
+            Text(
               'Show more',
               style: TextStyle(
                 fontSize: 16,
@@ -328,8 +329,8 @@ class VillaDetailScreen extends ConsumerWidget {
                 decoration: TextDecoration.underline,
               ),
             ),
-            const SizedBox(width: 4),
-            const Icon(LucideIcons.chevronRight, size: 16),
+            SizedBox(width: 4),
+            Icon(LucideIcons.chevronRight, size: 16),
           ],
         ),
       ],

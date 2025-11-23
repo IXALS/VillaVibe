@@ -71,15 +71,15 @@ class HomeHeroSection extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Top Bar
-                Row(
+                const Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Row(
                       children: [
-                        const Icon(LucideIcons.mapPin,
+                        Icon(LucideIcons.mapPin,
                             color: Colors.white, size: 16),
-                        const SizedBox(width: 4),
-                        const Text(
+                        SizedBox(width: 4),
+                        Text(
                           'Norway',
                           style: TextStyle(
                             color: Colors.white,

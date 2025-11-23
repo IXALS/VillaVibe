@@ -11,7 +11,10 @@ import 'package:villavibe/features/properties/presentation/screens/host_dashboar
 import 'package:villavibe/features/properties/presentation/screens/host_property_form.dart';
 import 'package:villavibe/features/home/presentation/screens/home_screen.dart';
 import 'package:villavibe/features/guest/presentation/screens/villa_detail_screen.dart';
+import 'package:villavibe/features/bookings/presentation/screens/booking_message_screen.dart';
 import 'package:villavibe/features/bookings/presentation/screens/booking_payment_screen.dart';
+import 'package:villavibe/features/bookings/presentation/screens/booking_review_screen.dart';
+import 'package:villavibe/features/bookings/presentation/screens/booking_success_screen.dart';
 import 'package:villavibe/features/properties/domain/models/property.dart';
 
 part 'app_router.g.dart';
@@ -33,20 +36,14 @@ GoRouter router(RouterRef ref) {
       // Protected routes that require login
       final isHostRoute = state.uri.toString().startsWith('/host') ||
           state.uri.toString() == '/add-property';
-      final isBookingRoute = state.uri.toString() == '/booking';
+      final isBookingRoute = state.uri.toString().startsWith('/booking');
 
       if (isLaunch) return null;
       if (isOnboarding) return null;
 
-      // If trying to access protected route and not logged in, go to home (where login modal can be shown)
-      // or we could redirect to login, but user wants modal.
-      // For now, let's redirect to home if they try to access host stuff without login,
-      // or maybe just block them.
-      // Actually, simpler: if not logged in, they can go anywhere EXCEPT host/booking.
-
       if (!isLoggedIn) {
         if (isHostRoute || isBookingRoute) {
-          return '/home'; // Redirect to home, where we can show login modal if needed, or just let them browse
+          return '/home';
         }
       }
 
@@ -90,9 +87,41 @@ GoRouter router(RouterRef ref) {
       GoRoute(
         path: '/booking',
         builder: (context, state) {
-          final property = state.extra as Property;
-          return BookingPaymentScreen(property: property);
+          final property = state.extra as Property?;
+          if (property == null) {
+            return const Scaffold(
+                body: Center(child: Text('Error: Property data missing')));
+          }
+          return BookingReviewScreen(property: property);
         },
+        routes: [
+          GoRoute(
+            path: 'payment',
+            builder: (context, state) {
+              final property = state.extra as Property?;
+              if (property == null) {
+                return const Scaffold(
+                    body: Center(child: Text('Error: Property data missing')));
+              }
+              return BookingPaymentScreen(property: property);
+            },
+          ),
+          GoRoute(
+            path: 'message',
+            builder: (context, state) {
+              final property = state.extra as Property?;
+              if (property == null) {
+                return const Scaffold(
+                    body: Center(child: Text('Error: Property data missing')));
+              }
+              return BookingMessageScreen(property: property);
+            },
+          ),
+          GoRoute(
+            path: 'success',
+            builder: (context, state) => const BookingSuccessScreen(),
+          ),
+        ],
       ),
     ],
   );

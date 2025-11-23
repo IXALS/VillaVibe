@@ -64,6 +64,8 @@ class Property {
   final String cancellationPolicy;
   final List<String> houseRules;
   final List<String> safetyItems;
+  final int priceTotal;
+  final String dateRangeText;
 
   Property({
     required this.id,
@@ -89,6 +91,8 @@ class Property {
     this.cancellationPolicy = '',
     this.houseRules = const [],
     this.safetyItems = const [],
+    this.priceTotal = 0,
+    this.dateRangeText = '',
   });
 
   factory Property.fromFirestore(DocumentSnapshot doc) {
@@ -120,6 +124,8 @@ class Property {
       cancellationPolicy: data['cancellationPolicy'] ?? '',
       houseRules: List<String>.from(data['houseRules'] ?? []),
       safetyItems: List<String>.from(data['safetyItems'] ?? []),
+      priceTotal: data['priceTotal'] ?? 0,
+      dateRangeText: data['dateRangeText'] ?? '',
     );
   }
 
@@ -147,6 +153,8 @@ class Property {
       'cancellationPolicy': cancellationPolicy,
       'houseRules': houseRules,
       'safetyItems': safetyItems,
+      'priceTotal': priceTotal,
+      'dateRangeText': dateRangeText,
     };
   }
 }

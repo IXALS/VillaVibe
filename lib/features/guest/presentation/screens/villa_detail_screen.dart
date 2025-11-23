@@ -45,40 +45,46 @@ class VillaDetailScreen extends ConsumerWidget {
   }
 
   Widget _buildContent(BuildContext context, Property property) {
-    return CustomScrollView(
-      slivers: [
-        _buildSliverAppBar(context, property),
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 24),
-                _buildHeader(property),
-                const Divider(height: 48),
-                _buildHostSection(property),
-                const Divider(height: 48),
-                _buildHighlights(),
-                const Divider(height: 48),
-                _buildDescription(property),
-                const Divider(height: 48),
-                _buildAmenities(property),
-                const Divider(height: 48),
-                _buildReviewsSection(property),
-                const Divider(height: 48),
-                _buildMeetYourHost(property),
-                const Divider(height: 48),
-                _buildAvailability(),
-                const Divider(height: 48),
-                _buildThingsToKnow(property),
-                const Divider(height: 48),
-                _buildLocation(property),
-                const SizedBox(height: 100), // Bottom padding for fixed bar
-              ],
+    return Stack(
+      children: [
+        CustomScrollView(
+          slivers: [
+            _buildSliverAppBar(context, property),
+            SliverToBoxAdapter(
+              child: Container(
+                color: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 12),
+                    _buildHeader(property),
+                    const Divider(height: 48),
+                    _buildHostSection(property),
+                    const Divider(height: 48),
+                    _buildHighlights(),
+                    const Divider(height: 48),
+                    _buildDescription(property),
+                    const Divider(height: 48),
+                    _buildAmenities(property),
+                    const Divider(height: 48),
+                    _buildReviewsSection(property),
+                    const Divider(height: 48),
+                    _buildMeetYourHost(property),
+                    const Divider(height: 48),
+                    _buildAvailability(property),
+                    const Divider(height: 48),
+                    _buildThingsToKnow(property),
+                    const Divider(height: 48),
+                    _buildLocation(property),
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
             ),
-          ),
+          ],
         ),
+        _buildFixedHeaderIcons(context, property),
       ],
     );
   }
@@ -86,49 +92,28 @@ class VillaDetailScreen extends ConsumerWidget {
   Widget _buildSliverAppBar(BuildContext context, Property property) {
     return SliverAppBar(
       expandedHeight: 300,
-      pinned: true,
-      backgroundColor: Colors.white,
+      pinned: false,
+      backgroundColor: Colors.transparent,
+      surfaceTintColor: Colors.transparent,
       elevation: 0,
-      leading: CircleAvatar(
-        backgroundColor: Colors.white,
-        child: IconButton(
-          icon:
-              const Icon(LucideIcons.arrowLeft, color: Colors.black, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ).animate().fadeIn(delay: 200.ms),
-      actions: [
-        CircleAvatar(
-          backgroundColor: Colors.white,
-          child: IconButton(
-            icon: const Icon(LucideIcons.share, color: Colors.black, size: 20),
-            onPressed: () {},
-          ),
-        ).animate().fadeIn(delay: 300.ms),
-        const SizedBox(width: 12),
-        CircleAvatar(
-          backgroundColor: Colors.white,
-          child: FavoriteButton(
-            villaId: property.id,
-            color: Colors.black, // Icon hitam karena background-nya putih
-          ),
-        ).animate().fadeIn(delay: 400.ms),
-        const SizedBox(width: 24),
-      ],
+      automaticallyImplyLeading: false,
       flexibleSpace: FlexibleSpaceBar(
         background: Stack(
           fit: StackFit.expand,
           children: [
             property.images.isNotEmpty
-                ? Image.network(
-                    property.images.first,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) =>
-                        Container(color: Colors.grey[200]),
+                ? Hero(
+                    tag: 'property_image_${property.id}',
+                    child: Image.network(
+                      property.images.first,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) =>
+                          Container(color: Colors.grey[200]),
+                    ),
                   )
                 : Container(color: Colors.grey[200]),
             Positioned(
-              bottom: 16,
+              bottom: 40,
               right: 16,
               child: Container(
                 padding:
@@ -146,6 +131,63 @@ class VillaDetailScreen extends ConsumerWidget {
           ],
         ),
       ),
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(30),
+        child: Container(
+          height: 30,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFixedHeaderIcons(BuildContext context, Property property) {
+    return Positioned(
+      top: 0,
+      left: 0,
+      right: 0,
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              CircleAvatar(
+                backgroundColor: Colors.white,
+                child: IconButton(
+                  icon: const Icon(LucideIcons.arrowLeft,
+                      color: Colors.black, size: 20),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ).animate().fadeIn(delay: 200.ms),
+              Row(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: Colors.white,
+                    child: IconButton(
+                      icon: const Icon(LucideIcons.share,
+                          color: Colors.black, size: 20),
+                      onPressed: () {},
+                    ),
+                  ).animate().fadeIn(delay: 300.ms),
+                  const SizedBox(width: 12),
+                  CircleAvatar(
+                    backgroundColor: Colors.white,
+                    child: FavoriteButton(
+                      villaId: property.id,
+                      color: Colors.black,
+                    ),
+                  ).animate().fadeIn(delay: 400.ms),
+                  const SizedBox(width: 16),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -159,6 +201,7 @@ class VillaDetailScreen extends ConsumerWidget {
             fontSize: 26,
             fontWeight: FontWeight.bold,
             height: 1.2,
+            color: Color(0xFF212121), // Dark Grey
           ),
         ),
         const SizedBox(height: 8),
@@ -211,6 +254,7 @@ class VillaDetailScreen extends ConsumerWidget {
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
+                color: Color(0xFF212121),
               ),
             ),
             Text(
@@ -265,6 +309,7 @@ class VillaDetailScreen extends ConsumerWidget {
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
+                  color: Color(0xFF212121),
                 ),
               ),
               const SizedBox(height: 4),
@@ -346,6 +391,7 @@ class VillaDetailScreen extends ConsumerWidget {
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
+            color: Color(0xFF212121),
           ),
         ),
         const SizedBox(height: 24),
@@ -429,6 +475,7 @@ class VillaDetailScreen extends ConsumerWidget {
               style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
+                color: Color(0xFF212121),
               ),
             ),
           ],
@@ -538,6 +585,7 @@ class VillaDetailScreen extends ConsumerWidget {
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
+            color: Color(0xFF212121),
           ),
         ),
         const SizedBox(height: 24),
@@ -687,7 +735,7 @@ class VillaDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildAvailability() {
+  Widget _buildAvailability(Property property) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -696,10 +744,13 @@ class VillaDetailScreen extends ConsumerWidget {
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
+            color: Color(0xFF212121),
           ),
         ),
         const SizedBox(height: 16),
-        const Text('Nov 21 - 23'),
+        Text(property.dateRangeText.isNotEmpty
+            ? property.dateRangeText
+            : 'Select dates'),
         const SizedBox(height: 24),
         // Placeholder for Calendar
         Container(
@@ -723,6 +774,7 @@ class VillaDetailScreen extends ConsumerWidget {
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
+            color: Color(0xFF212121),
           ),
         ),
         const SizedBox(height: 24),
@@ -788,6 +840,7 @@ class VillaDetailScreen extends ConsumerWidget {
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
+            color: Color(0xFF212121),
           ),
         ),
         const SizedBox(height: 16),
@@ -798,51 +851,11 @@ class VillaDetailScreen extends ConsumerWidget {
         const SizedBox(height: 24),
         Container(
           height: 240,
-          width: double.infinity,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
             color: Colors.grey[200],
+            borderRadius: BorderRadius.circular(12),
           ),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.network(
-                  'https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=2074&auto=format&fit=crop', // Placeholder map image
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: Colors.grey[300],
-                      child: const Center(
-                        child:
-                            Icon(LucideIcons.map, color: Colors.grey, size: 48),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              // TODO: Replace with real Google Maps implementation using a valid API key
-              // 'https://maps.googleapis.com/maps/api/staticmap?center=-6.2088,106.8456&zoom=13&size=600x300&key=YOUR_API_KEY_HERE'
-              Center(
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 8,
-                        offset: Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(LucideIcons.home, color: Colors.black),
-                ),
-              ),
-            ],
-          ),
+          child: const Center(child: Text('Map Placeholder')),
         ),
       ],
     );
@@ -850,17 +863,20 @@ class VillaDetailScreen extends ConsumerWidget {
 
   Widget _buildBottomBar(
       BuildContext context, Property property, bool isLoggedIn) {
-    final currencyFormat = NumberFormat.currency(
-      locale: 'id_ID',
-      symbol: 'Rp',
-      decimalDigits: 0,
-    );
+    final currencyFormat =
+        NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
 
     return Container(
       padding: const EdgeInsets.all(24),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(top: BorderSide(color: Colors.black12)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -4),
+          ),
+        ],
       ),
       child: SafeArea(
         child: Row(
@@ -870,17 +886,21 @@ class VillaDetailScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  currencyFormat.format(property.pricePerNight),
+                  currencyFormat.format(property.priceTotal),
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
+                    decoration: TextDecoration.underline,
                   ),
                 ),
-                const Text(
-                  'Total before taxes',
-                  style: TextStyle(
+                const SizedBox(height: 4),
+                Text(
+                  property.dateRangeText.isNotEmpty
+                      ? property.dateRangeText
+                      : 'Select dates',
+                  style: const TextStyle(
                     fontSize: 14,
-                    color: Colors.black54,
+                    color: Colors.black87,
                     decoration: TextDecoration.underline,
                   ),
                 ),
@@ -889,14 +909,14 @@ class VillaDetailScreen extends ConsumerWidget {
             const Spacer(),
             ElevatedButton(
               onPressed: () {
-                if (isLoggedIn) {
-                  context.push('/booking', extra: property);
-                } else {
+                if (!isLoggedIn) {
                   showLoginModal(context);
+                } else {
+                  context.push('/booking', extra: property);
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE91E63), // Pink/Red
+                backgroundColor: const Color(0xFFE91E63), // Pink-red
                 foregroundColor: Colors.white,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 32, vertical: 16),

@@ -147,12 +147,12 @@ class _QrisPaymentScreenState extends ConsumerState<QrisPaymentScreen> {
         }
       }
     } catch (e) {
+      debugPrint('Error completing booking: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+          const SnackBar(content: Text('Unable to complete booking. Please try again.')),
         );
       }
-    }
   }
 
   @override

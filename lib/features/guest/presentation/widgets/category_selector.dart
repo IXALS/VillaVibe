@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../../domain/models/category.dart';
 
 class CategorySelector extends StatefulWidget {
   const CategorySelector({super.key});
@@ -13,14 +14,14 @@ class _CategorySelectorState extends State<CategorySelector> {
   int _selectedIndex = 0;
 
   // Data Kategori (Icon + Nama)
-  final List<Map<String, dynamic>> _categories = [
-    {'icon': LucideIcons.layoutGrid, 'label': 'All'},
-    {'icon': LucideIcons.waves, 'label': 'Beach'},
-    {'icon': LucideIcons.mountain, 'label': 'Mountain'},
-    {'icon': LucideIcons.building2, 'label': 'City'},
-    {'icon': LucideIcons.tent, 'label': 'Camping'},
-    {'icon': LucideIcons.snowflake, 'label': 'Arctic'},
-    {'icon': LucideIcons.palmtree, 'label': 'Tropical'},
+  final List<Category> _categories = const [
+    Category(icon: LucideIcons.layoutGrid, label: 'All'),
+    Category(icon: LucideIcons.waves, label: 'Beach'),
+    Category(icon: LucideIcons.mountain, label: 'Mountain'),
+    Category(icon: LucideIcons.building2, label: 'City'),
+    Category(icon: LucideIcons.tent, label: 'Camping'),
+    Category(icon: LucideIcons.snowflake, label: 'Arctic'),
+    Category(icon: LucideIcons.palmtree, label: 'Tropical'),
   ];
 
   @override
@@ -67,13 +68,13 @@ class _CategorySelectorState extends State<CategorySelector> {
                 child: Row(
                   children: [
                     Icon(
-                      category['icon'] as IconData,
+                      category.icon,
                       size: 16,
                       color: isSelected ? Colors.white : Colors.black87,
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      category['label'] as String,
+                      category.label,
                       style: TextStyle(
                         color: isSelected ? Colors.white : Colors.black87,
                         fontWeight: FontWeight.w600,

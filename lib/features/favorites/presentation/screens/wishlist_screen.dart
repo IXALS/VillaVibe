@@ -14,13 +14,14 @@ class WishlistScreen extends ConsumerWidget {
     final favoritesAsync = ref.watch(favoritePropertiesProvider);
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(
           'Wishlists',
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
         centerTitle: false,
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.white,
         elevation: 0,
       ),
       body: favoritesAsync.when(

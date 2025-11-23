@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:villavibe/features/bookings/presentation/controllers/booking_controller.dart';
 import 'package:villavibe/features/bookings/presentation/states/booking_state.dart';
+import 'package:villavibe/features/bookings/presentation/widgets/booking_progress_bar.dart';
 import 'package:villavibe/features/properties/domain/models/property.dart';
 
 class BookingPaymentScreen extends ConsumerWidget {
@@ -153,30 +154,37 @@ class BookingPaymentScreen extends ConsumerWidget {
         ],
       ),
       child: SafeArea(
-        child: SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: () {
-              controller.nextStep();
-              context.push('/booking/message', extra: controller.property);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.black,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const BookingProgressBar(currentStep: 2),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  controller.nextStep();
+                  context.push('/booking/message', extra: controller.property);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  elevation: 0,
+                ),
+                child: const Text(
+                  'Next',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
-              elevation: 0,
             ),
-            child: const Text(
-              'Next',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
+          ],
         ),
       ),
     );

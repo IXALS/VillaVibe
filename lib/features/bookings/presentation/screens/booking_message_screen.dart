@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:villavibe/features/auth/data/repositories/auth_repository.dart';
-import 'package:villavibe/features/bookings/data/repositories/booking_repository.dart';
-import 'package:villavibe/features/bookings/domain/models/booking.dart';
 import 'package:villavibe/features/bookings/presentation/controllers/booking_controller.dart';
+import 'package:villavibe/features/bookings/presentation/widgets/booking_progress_bar.dart';
 import 'package:villavibe/features/properties/domain/models/property.dart';
 
 class BookingMessageScreen extends ConsumerStatefulWidget {
@@ -20,57 +18,11 @@ class BookingMessageScreen extends ConsumerStatefulWidget {
 
 class _BookingMessageScreenState extends ConsumerState<BookingMessageScreen> {
   final _messageController = TextEditingController();
-  bool _isLoading = false;
 
   @override
   void dispose() {
     _messageController.dispose();
     super.dispose();
-  }
-
-  Future<void> _submitBooking(BookingController controller) async {
-    if (_messageController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please write a message to the host')),
-      );
-      return;
-    }
-
-    setState(() => _isLoading = true);
-    controller.setMessage(_messageController.text);
-
-    try {
-      final user = await ref.read(currentUserProvider.future);
-      if (user == null) throw Exception('User not logged in');
-
-      final bookingState = ref.read(bookingControllerProvider(widget.property));
-
-      final booking = Booking(
-        id: '', // Repo handles ID
-        propertyId: widget.property.id,
-        guestId: user.uid,
-        hostId: widget.property.hostId,
-        startDate: bookingState.checkInDate,
-        endDate: bookingState.checkOutDate,
-        totalPrice: bookingState.totalPrice,
-        status: 'paid', // Assume paid for demo
-        messageToHost: bookingState.messageToHost,
-      );
-
-      await ref.read(bookingRepositoryProvider).createBooking(booking);
-
-      if (mounted) {
-        context.go('/booking/success');
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
   }
 
   @override
@@ -159,34 +111,40 @@ class _BookingMessageScreenState extends ConsumerState<BookingMessageScreen> {
         ],
       ),
       child: SafeArea(
-        child: SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: _isLoading ? null : () => _submitBooking(controller),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFE91E63), // Airbnb Pink
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              elevation: 0,
-            ),
-            child: _isLoading
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                        color: Colors.white, strokeWidth: 2),
-                  )
-                : const Text(
-                    'Request to book',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const BookingProgressBar(currentStep: 3),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  if (_messageController.text.trim().isNotEmpty) {
+                    controller.setMessage(_messageController.text);
+                  }
+                  controller.nextStep();
+                  context.push('/booking/request', extra: widget.property);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
                   ),
-          ),
+                  elevation: 0,
+                ),
+                child: const Text(
+                  'Next',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

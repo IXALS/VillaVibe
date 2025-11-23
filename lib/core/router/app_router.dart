@@ -15,9 +15,14 @@ import 'package:villavibe/features/bookings/presentation/screens/booking_message
 import 'package:villavibe/features/bookings/presentation/screens/booking_payment_screen.dart';
 import 'package:villavibe/features/bookings/presentation/screens/booking_review_screen.dart';
 import 'package:villavibe/features/bookings/presentation/screens/booking_success_screen.dart';
+import 'package:villavibe/features/bookings/presentation/screens/qris_payment_screen.dart';
+import 'package:villavibe/features/bookings/presentation/screens/request_to_book_screen.dart';
 import 'package:villavibe/features/properties/domain/models/property.dart';
 
 part 'app_router.g.dart';
+
+final RouteObserver<ModalRoute<void>> routeObserver =
+    RouteObserver<ModalRoute<void>>();
 
 @riverpod
 GoRouter router(RouterRef ref) {
@@ -25,6 +30,7 @@ GoRouter router(RouterRef ref) {
 
   return GoRouter(
     initialLocation: '/',
+    observers: [routeObserver],
     refreshListenable:
         GoRouterRefreshStream(ref.watch(authStateProvider.stream)),
     redirect: (context, state) {
@@ -67,7 +73,10 @@ GoRouter router(RouterRef ref) {
       ),
       GoRoute(
         path: '/home',
-        builder: (context, state) => const HomeScreen(),
+        builder: (context, state) {
+          final initialIndex = state.extra as int? ?? 0;
+          return HomeScreen(initialIndex: initialIndex);
+        },
       ),
       GoRoute(
         path: '/add-property',
@@ -77,6 +86,7 @@ GoRouter router(RouterRef ref) {
         path: '/host-dashboard',
         builder: (context, state) => const HostDashboardScreen(),
       ),
+      // Removed /my-bookings as it's now part of Home (Tab 2)
       GoRoute(
         path: '/property/:id',
         builder: (context, state) {
@@ -97,24 +107,111 @@ GoRouter router(RouterRef ref) {
         routes: [
           GoRoute(
             path: 'payment',
-            builder: (context, state) {
+            pageBuilder: (context, state) {
               final property = state.extra as Property?;
-              if (property == null) {
-                return const Scaffold(
-                    body: Center(child: Text('Error: Property data missing')));
-              }
-              return BookingPaymentScreen(property: property);
+              return CustomTransitionPage(
+                key: state.pageKey,
+                child: property == null
+                    ? const Scaffold(
+                        body:
+                            Center(child: Text('Error: Property data missing')))
+                    : BookingPaymentScreen(property: property),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                  return SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(1.0, 0.0),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: FadeTransition(opacity: animation, child: child),
+                  );
+                },
+              );
             },
           ),
           GoRoute(
             path: 'message',
-            builder: (context, state) {
+            pageBuilder: (context, state) {
               final property = state.extra as Property?;
-              if (property == null) {
-                return const Scaffold(
-                    body: Center(child: Text('Error: Property data missing')));
+              return CustomTransitionPage(
+                key: state.pageKey,
+                child: property == null
+                    ? const Scaffold(
+                        body:
+                            Center(child: Text('Error: Property data missing')))
+                    : BookingMessageScreen(property: property),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                  return SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(1.0, 0.0),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: FadeTransition(opacity: animation, child: child),
+                  );
+                },
+              );
+            },
+          ),
+          GoRoute(
+            path: 'request',
+            pageBuilder: (context, state) {
+              final property = state.extra as Property?;
+              return CustomTransitionPage(
+                key: state.pageKey,
+                child: property == null
+                    ? const Scaffold(
+                        body:
+                            Center(child: Text('Error: Property data missing')))
+                    : RequestToBookScreen(property: property),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                  return SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(1.0, 0.0),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: FadeTransition(opacity: animation, child: child),
+                  );
+                },
+              );
+            },
+          ),
+          GoRoute(
+            path: 'qris',
+            pageBuilder: (context, state) {
+              final extra = state.extra;
+              Property? property;
+              String? bookingId;
+
+              if (extra is Property) {
+                property = extra;
+              } else if (extra is Map<String, dynamic>) {
+                property = extra['property'] as Property?;
+                bookingId = extra['bookingId'] as String?;
               }
-              return BookingMessageScreen(property: property);
+
+              return CustomTransitionPage(
+                key: state.pageKey,
+                child: property == null
+                    ? const Scaffold(
+                        body:
+                            Center(child: Text('Error: Property data missing')))
+                    : QrisPaymentScreen(
+                        property: property,
+                        bookingId: bookingId,
+                      ),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                  return SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(1.0, 0.0),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: FadeTransition(opacity: animation, child: child),
+                  );
+                },
+              );
             },
           ),
           GoRoute(

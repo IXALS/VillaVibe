@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:villavibe/features/bookings/presentation/states/booking_state.dart';
+import 'package:villavibe/features/bookings/domain/models/booking.dart';
 import 'package:villavibe/features/properties/domain/models/property.dart';
 
 class BookingController extends StateNotifier<BookingState> {
@@ -38,7 +39,7 @@ class BookingController extends StateNotifier<BookingState> {
   }
 
   void nextStep() {
-    if (state.currentStep < 2) {
+    if (state.currentStep < 4) {
       state = state.copyWith(currentStep: state.currentStep + 1);
     }
   }
@@ -47,6 +48,16 @@ class BookingController extends StateNotifier<BookingState> {
     if (state.currentStep > 0) {
       state = state.copyWith(currentStep: state.currentStep - 1);
     }
+  }
+
+  void resumeBooking(Booking booking) {
+    state = state.copyWith(
+      checkInDate: booking.startDate,
+      checkOutDate: booking.endDate,
+      totalPrice: booking.totalPrice,
+      messageToHost: booking.messageToHost,
+      currentStep: 4, // Jump to QRIS step
+    );
   }
 }
 

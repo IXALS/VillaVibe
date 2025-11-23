@@ -32,7 +32,7 @@ class FloatingBottomNavBar extends StatelessWidget {
         children: [
           _buildNavItem(0, Icons.explore_outlined, Icons.explore, 'Discover'),
           _buildNavItem(1, Icons.favorite_border, Icons.favorite, 'Favorites'),
-          _buildNavItem(2, Icons.book_outlined, Icons.book, 'Bookings'),
+          _buildNavItem(2, Icons.book_outlined, Icons.book, 'Trips'),
           _buildNavItem(
               3, Icons.chat_bubble_outline, Icons.chat_bubble, 'Messages'),
           _buildNavItem(4, Icons.person_outline, Icons.person, 'Profile'),

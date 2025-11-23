@@ -36,48 +36,52 @@ class _CategorySelectorState extends State<CategorySelector> {
           final category = _categories[index];
           final isSelected = _selectedIndex == index;
 
-          return GestureDetector(
-            onTap: () {
-              setState(() {
-                _selectedIndex = index;
-              });
-              // Nanti di sini kita tambahkan logic filter villa
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: isSelected ? Colors.black : Colors.white,
-                borderRadius: BorderRadius.circular(20), // Rounded pill shape
-                border: Border.all(
-                  color: isSelected ? Colors.black : Colors.grey[300]!,
+          return Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(20),
+              onTap: () {
+                setState(() {
+                  _selectedIndex = index;
+                });
+                // Nanti di sini kita tambahkan logic filter villa
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected ? Colors.black : Colors.white,
+                  borderRadius: BorderRadius.circular(20), // Rounded pill shape
+                  border: Border.all(
+                    color: isSelected ? Colors.black : Colors.grey[300]!,
+                  ),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          )
+                        ]
+                      : null,
                 ),
-                boxShadow: isSelected
-                    ? [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.2),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        )
-                      ]
-                    : null,
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    category['icon'] as IconData,
-                    size: 16,
-                    color: isSelected ? Colors.white : Colors.black87,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    category['label'] as String,
-                    style: TextStyle(
+                child: Row(
+                  children: [
+                    Icon(
+                      category['icon'] as IconData,
+                      size: 16,
                       color: isSelected ? Colors.white : Colors.black87,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 8),
+                    Text(
+                      category['label'] as String,
+                      style: TextStyle(
+                        color: isSelected ? Colors.white : Colors.black87,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           );

@@ -1,25 +1,24 @@
-import 'package:villavibe/features/guest/presentation/widgets/category_selector.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:villavibe/features/properties/data/repositories/property_repository.dart';
-import 'package:villavibe/features/properties/domain/models/property.dart';
-import 'package:villavibe/features/auth/data/repositories/auth_repository.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 import 'package:villavibe/core/presentation/widgets/property_card.dart';
-
+import 'package:villavibe/features/auth/data/repositories/auth_repository.dart';
+import 'package:villavibe/features/guest/presentation/widgets/authenticated_profile_view.dart';
+import 'package:villavibe/features/guest/presentation/widgets/category_selector.dart';
 import 'package:villavibe/features/guest/presentation/widgets/login_prompt_view.dart';
 import 'package:villavibe/features/guest/presentation/widgets/profile_login_view.dart';
-import 'package:villavibe/features/guest/presentation/widgets/authenticated_profile_view.dart';
-import 'package:villavibe/features/home/presentation/widgets/home_hero_section.dart';
-import 'package:villavibe/features/home/presentation/widgets/floating_bottom_nav_bar.dart';
+import 'package:villavibe/features/home/presentation/providers/search_provider.dart';
 import 'package:villavibe/features/home/presentation/widgets/destination_card.dart';
+import 'package:villavibe/features/home/presentation/widgets/floating_bottom_nav_bar.dart';
+import 'package:villavibe/features/home/presentation/widgets/home_hero_section.dart';
 import 'package:villavibe/features/home/presentation/widgets/search_filter_modal.dart';
 import 'package:villavibe/features/home/presentation/widgets/top_search_bar.dart';
-import 'package:villavibe/features/home/presentation/providers/search_provider.dart';
-import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
+import 'package:villavibe/features/properties/data/repositories/property_repository.dart';
+import 'package:villavibe/features/properties/domain/models/property.dart';
 
 class GuestHomeScreen extends ConsumerStatefulWidget {
   const GuestHomeScreen({super.key});

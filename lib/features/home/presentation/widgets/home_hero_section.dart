@@ -76,10 +76,10 @@ class HomeHeroSection extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Icon(LucideIcons.mapPin,
+                        const Icon(LucideIcons.mapPin,
                             color: Colors.white, size: 16),
-                        SizedBox(width: 4),
-                        Text(
+                        const SizedBox(width: 4),
+                        const Text(
                           'Norway',
                           style: TextStyle(
                             color: Colors.white,

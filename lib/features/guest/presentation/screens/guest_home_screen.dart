@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
-import 'package:villavibe/core/presentation/widgets/property_card.dart';
 import 'package:villavibe/features/auth/data/repositories/auth_repository.dart';
 import 'package:villavibe/features/bookings/presentation/screens/my_bookings_screen.dart';
 import 'package:villavibe/features/favorites/presentation/screens/wishlist_screen.dart';
@@ -21,7 +20,7 @@ import 'package:villavibe/features/home/presentation/widgets/standard_bottom_nav
 import 'package:villavibe/features/home/presentation/widgets/top_search_bar.dart';
 import 'package:villavibe/features/properties/data/repositories/property_repository.dart';
 import 'package:villavibe/features/properties/domain/models/property.dart';
-import 'package:villavibe/features/home/presentation/widgets/villa_compact_card.dart';
+import 'package:villavibe/features/properties/presentation/widgets/villa_compact_card.dart';
 
 class GuestHomeScreen extends ConsumerStatefulWidget {
   final int initialIndex;
@@ -321,30 +320,32 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
         ).animate().fadeIn(delay: delay).slideY(begin: 0.2, end: 0),
         const SizedBox(height: 16),
         _isSearchActive
-            ? ListView.builder(
+            ? GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 padding: const EdgeInsets.symmetric(horizontal: 16),
+                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 240,
+                  childAspectRatio: 0.55,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                ),
                 itemCount: properties.length,
                 itemBuilder: (context, index) {
                   final property = properties[index];
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 24.0),
-                    child: PropertyCard(
-                      property: property,
-                      onTap: () {
-                        context.push('/property/${property.id}',
-                            extra: property);
-                      },
-                    ),
+                  return VillaCompactCard(
+                    property: property,
+                    onTap: () {
+                      context.push('/property/${property.id}', extra: property);
+                    },
                   )
                       .animate()
-                      .fadeIn(delay: delay + (100 * index).ms)
-                      .slideY(begin: 0.2, end: 0, curve: Curves.easeOutCubic);
+                      .fadeIn(delay: delay + (50 * index).ms)
+                      .slideY(begin: 0.1, end: 0, curve: Curves.easeOutCubic);
                 },
               )
             : SizedBox(
-                height: 280,
+                height: 340,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
                   physics: const BouncingScrollPhysics(),

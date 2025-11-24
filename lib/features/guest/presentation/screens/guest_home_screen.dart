@@ -173,7 +173,12 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
 
           const SizedBox(height: 24),
           if (!_isSearchActive) ...[
-            const CategorySelector(),
+            CategorySelector(
+              onCategoryChanged: (category) {
+                // NANTI DI SINI KITA PASANG LOGIC FILTERNYA
+                print("User memilih kategori: $category"); 
+              },
+            ),
             const SizedBox(height: 24),
           ],
 

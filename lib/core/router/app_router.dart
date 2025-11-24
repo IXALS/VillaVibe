@@ -12,12 +12,9 @@ import 'package:villavibe/features/properties/presentation/screens/host_property
 import 'package:villavibe/features/home/presentation/screens/home_screen.dart';
 import 'package:villavibe/features/guest/presentation/screens/villa_detail_screen.dart';
 import 'package:villavibe/features/home/presentation/screens/destination_detail_screen.dart';
-import 'package:villavibe/features/bookings/presentation/screens/booking_message_screen.dart';
-import 'package:villavibe/features/bookings/presentation/screens/booking_payment_screen.dart';
-import 'package:villavibe/features/bookings/presentation/screens/booking_review_screen.dart';
+import 'package:villavibe/features/bookings/presentation/screens/booking_flow_wrapper.dart';
 import 'package:villavibe/features/bookings/presentation/screens/booking_success_screen.dart';
 import 'package:villavibe/features/bookings/presentation/screens/qris_payment_screen.dart';
-import 'package:villavibe/features/bookings/presentation/screens/request_to_book_screen.dart';
 import 'package:villavibe/features/properties/domain/models/property.dart';
 
 part 'app_router.g.dart';
@@ -91,8 +88,15 @@ GoRouter router(RouterRef ref) {
       GoRoute(
         path: '/property/:id',
         builder: (context, state) {
-          final id = state.pathParameters['id']!;
-          return VillaDetailScreen(propertyId: id);
+          final property = state.extra as Property?;
+          if (property == null) {
+            return const Scaffold(
+              body: Center(
+                  child: Text(
+                      'Error: Property data missing (Deep link not supported yet)')),
+            );
+          }
+          return VillaDetailScreen(property: property);
         },
       ),
       GoRoute(
@@ -103,81 +107,9 @@ GoRouter router(RouterRef ref) {
             return const Scaffold(
                 body: Center(child: Text('Error: Property data missing')));
           }
-          return BookingReviewScreen(property: property);
+          return BookingFlowWrapper(property: property);
         },
         routes: [
-          GoRoute(
-            path: 'payment',
-            pageBuilder: (context, state) {
-              final property = state.extra as Property?;
-              return CustomTransitionPage(
-                key: state.pageKey,
-                child: property == null
-                    ? const Scaffold(
-                        body:
-                            Center(child: Text('Error: Property data missing')))
-                    : BookingPaymentScreen(property: property),
-                transitionsBuilder:
-                    (context, animation, secondaryAnimation, child) {
-                  return SlideTransition(
-                    position: Tween<Offset>(
-                      begin: const Offset(1.0, 0.0),
-                      end: Offset.zero,
-                    ).animate(animation),
-                    child: FadeTransition(opacity: animation, child: child),
-                  );
-                },
-              );
-            },
-          ),
-          GoRoute(
-            path: 'message',
-            pageBuilder: (context, state) {
-              final property = state.extra as Property?;
-              return CustomTransitionPage(
-                key: state.pageKey,
-                child: property == null
-                    ? const Scaffold(
-                        body:
-                            Center(child: Text('Error: Property data missing')))
-                    : BookingMessageScreen(property: property),
-                transitionsBuilder:
-                    (context, animation, secondaryAnimation, child) {
-                  return SlideTransition(
-                    position: Tween<Offset>(
-                      begin: const Offset(1.0, 0.0),
-                      end: Offset.zero,
-                    ).animate(animation),
-                    child: FadeTransition(opacity: animation, child: child),
-                  );
-                },
-              );
-            },
-          ),
-          GoRoute(
-            path: 'request',
-            pageBuilder: (context, state) {
-              final property = state.extra as Property?;
-              return CustomTransitionPage(
-                key: state.pageKey,
-                child: property == null
-                    ? const Scaffold(
-                        body:
-                            Center(child: Text('Error: Property data missing')))
-                    : RequestToBookScreen(property: property),
-                transitionsBuilder:
-                    (context, animation, secondaryAnimation, child) {
-                  return SlideTransition(
-                    position: Tween<Offset>(
-                      begin: const Offset(1.0, 0.0),
-                      end: Offset.zero,
-                    ).animate(animation),
-                    child: FadeTransition(opacity: animation, child: child),
-                  );
-                },
-              );
-            },
-          ),
           GoRoute(
             path: 'qris',
             pageBuilder: (context, state) {

@@ -11,6 +11,7 @@ import 'package:villavibe/features/properties/presentation/screens/host_dashboar
 import 'package:villavibe/features/properties/presentation/screens/host_property_form.dart';
 import 'package:villavibe/features/home/presentation/screens/home_screen.dart';
 import 'package:villavibe/features/guest/presentation/screens/villa_detail_screen.dart';
+import 'package:villavibe/features/home/presentation/screens/destination_detail_screen.dart';
 import 'package:villavibe/features/bookings/presentation/screens/booking_message_screen.dart';
 import 'package:villavibe/features/bookings/presentation/screens/booking_payment_screen.dart';
 import 'package:villavibe/features/bookings/presentation/screens/booking_review_screen.dart';
@@ -219,6 +220,17 @@ GoRouter router(RouterRef ref) {
             builder: (context, state) => const BookingSuccessScreen(),
           ),
         ],
+      ),
+
+      GoRoute(
+        path: '/destination',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>;
+          return DestinationDetailScreen(
+            destinationName: extra['name'],
+            imageUrl: extra['image'],
+          );
+        },
       ),
     ],
   );

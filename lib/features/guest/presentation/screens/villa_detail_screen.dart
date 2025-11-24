@@ -72,55 +72,62 @@ class _VillaDetailScreenState extends ConsumerState<VillaDetailScreen> {
               child: Container(
                 color: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 600),
-                  switchInCurve: Curves.easeOutCubic,
-                  transitionBuilder: (child, animation) {
-                    return FadeTransition(
-                      opacity: animation,
-                      child: SlideTransition(
-                        position: Tween<Offset>(
-                          begin: const Offset(0, 0.1),
-                          end: Offset.zero,
-                        ).animate(animation),
-                        child: child,
-                      ),
-                    );
-                  },
-                  child: _isLoading
-                      ? Container(
-                          key: const ValueKey('loader'),
-                          height: 400, // Placeholder height
-                          alignment: Alignment.center,
-                          child: const ThreeDotsLoader(size: 10),
-                        )
-                      : Column(
-                          key: const ValueKey('content'),
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 12),
-                            _buildHeader(property),
-                            const Divider(height: 48),
-                            _buildHostSection(property),
-                            const Divider(height: 48),
-                            _buildHighlights(),
-                            const Divider(height: 48),
-                            _buildDescription(property),
-                            const Divider(height: 48),
-                            _buildAmenities(property),
-                            const Divider(height: 48),
-                            _buildReviewsSection(property),
-                            const Divider(height: 48),
-                            _buildMeetYourHost(property),
-                            const Divider(height: 48),
-                            _buildAvailability(property),
-                            const Divider(height: 48),
-                            _buildThingsToKnow(property),
-                            const Divider(height: 48),
-                            _buildLocation(property),
-                            const SizedBox(height: 24),
-                          ],
-                        ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 24), // Standard top padding
+                    _buildHeader(property), // Instant Header
+                    const SizedBox(height: 24),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 600),
+                      switchInCurve: Curves.easeOutCubic,
+                      transitionBuilder: (child, animation) {
+                        return FadeTransition(
+                          opacity: animation,
+                          child: SlideTransition(
+                            position: Tween<Offset>(
+                              begin: const Offset(0, 0.1),
+                              end: Offset.zero,
+                            ).animate(animation),
+                            child: child,
+                          ),
+                        );
+                      },
+                      child: _isLoading
+                          ? Container(
+                              key: const ValueKey('loader'),
+                              height: 200,
+                              alignment: Alignment.center,
+                              child: const ThreeDotsLoader(size: 10),
+                            )
+                          : Column(
+                              key: const ValueKey('content'),
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Divider(height: 1),
+                                const SizedBox(height: 24),
+                                _buildHostSection(property),
+                                const Divider(height: 48),
+                                _buildHighlights(),
+                                const Divider(height: 48),
+                                _buildDescription(property),
+                                const Divider(height: 48),
+                                _buildAmenities(property),
+                                const Divider(height: 48),
+                                _buildReviewsSection(property),
+                                const Divider(height: 48),
+                                _buildMeetYourHost(property),
+                                const Divider(height: 48),
+                                _buildAvailability(property),
+                                const Divider(height: 48),
+                                _buildThingsToKnow(property),
+                                const Divider(height: 48),
+                                _buildLocation(property),
+                                const SizedBox(height: 32),
+                              ],
+                            ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -145,48 +152,66 @@ class _VillaDetailScreenState extends ConsumerState<VillaDetailScreen> {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              CachedNetworkImage(
-                imageUrl: property.images.first,
-                fit: BoxFit.cover,
-                fadeInDuration: Duration.zero, // Critical for seamless Hero
-                placeholder: (context, url) => Container(
-                  color: Colors.grey[200],
-                ),
-                errorWidget: (context, url, error) => Container(
-                  color: Colors.grey[200],
-                  child: const Icon(LucideIcons.image, color: Colors.grey),
-                ),
-              ),
-              Positioned(
-                bottom: 40,
-                right: 16,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.7),
-                    borderRadius: BorderRadius.circular(4),
+              property.images.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: property.images.first,
+                      fit: BoxFit.cover,
+                      fadeInDuration: Duration.zero,
+                      placeholder: (context, url) => Container(
+                        color: Colors.grey[200],
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        color: Colors.grey[200],
+                        child:
+                            const Icon(LucideIcons.image, color: Colors.grey),
+                      ),
+                    )
+                  : Container(
+                      color: Colors.grey[200],
+                      child: const Icon(LucideIcons.image, color: Colors.grey),
+                    ),
+              if (property.images.isNotEmpty)
+                Positioned(
+                  bottom: 40 + 32, // Adjusted for the bottom rounded cap
+                  right: 16,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.7),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      '1/${property.images.length}',
+                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                    ),
                   ),
-                  child: Text(
-                    '1/${property.images.length}',
-                    style: const TextStyle(color: Colors.white, fontSize: 12),
-                  ),
                 ),
-              ),
+              // Fake Cap for Hero Transition Smoothness
               Positioned(
-                bottom: -1, // Slight overlap to prevent pixel bleeding
+                bottom: -1, // Slight overlap to prevent gaps
                 left: 0,
                 right: 0,
+                height: 33, // +1px to ensure full coverage
                 child: Container(
-                  height: 30,
                   decoration: const BoxDecoration(
                     color: Colors.white,
                     borderRadius:
-                        BorderRadius.vertical(top: Radius.circular(30)),
+                        BorderRadius.vertical(top: Radius.circular(32)),
                   ),
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(32),
+        child: Container(
+          height: 32,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
           ),
         ),
       ),

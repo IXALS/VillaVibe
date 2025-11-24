@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:go_router/go_router.dart';
-import 'package:villavibe/core/presentation/widgets/property_card.dart';
+import 'package:villavibe/features/properties/presentation/widgets/villa_compact_card.dart';
 import 'package:villavibe/features/favorites/presentation/providers/favorites_provider.dart';
 
 class WishlistScreen extends ConsumerWidget {
@@ -51,23 +51,26 @@ class WishlistScreen extends ConsumerWidget {
             );
           }
 
-          return ListView.builder(
+          return GridView.builder(
             padding: const EdgeInsets.all(16),
+            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: 240,
+              childAspectRatio: 0.55,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+            ),
             itemCount: properties.length,
             itemBuilder: (context, index) {
               final property = properties[index];
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 16.0),
-                child: PropertyCard(
-                  property: property,
-                  onTap: () {
-                    context.push('/property/${property.id}', extra: property);
-                  },
-                ),
+              return VillaCompactCard(
+                property: property,
+                onTap: () {
+                  context.push('/property/${property.id}', extra: property);
+                },
               )
                   .animate()
-                  .fadeIn(delay: (100 * index).ms)
-                  .slideX(begin: 0.1, end: 0);
+                  .fadeIn(delay: (50 * index).ms)
+                  .slideY(begin: 0.1, end: 0);
             },
           );
         },

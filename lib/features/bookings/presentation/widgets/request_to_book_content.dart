@@ -1,65 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:villavibe/features/auth/data/repositories/auth_repository.dart';
-import 'package:villavibe/features/bookings/data/repositories/booking_repository.dart';
-import 'package:villavibe/features/bookings/domain/models/booking.dart';
 import 'package:villavibe/features/bookings/presentation/controllers/booking_controller.dart';
 import 'package:villavibe/features/bookings/presentation/states/booking_state.dart';
-import 'package:villavibe/features/bookings/presentation/widgets/booking_progress_bar.dart';
 import 'package:villavibe/features/properties/domain/models/property.dart';
 
-class RequestToBookScreen extends ConsumerWidget {
+class RequestToBookContent extends ConsumerWidget {
   final Property property;
 
-  const RequestToBookScreen({super.key, required this.property});
+  const RequestToBookContent({super.key, required this.property});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final bookingState = ref.watch(bookingControllerProvider(property));
-    final controller = ref.read(bookingControllerProvider(property).notifier);
     final currencyFormat =
         NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(LucideIcons.arrowLeft, color: Colors.black),
-          onPressed: () {
-            controller.previousStep();
-            context.pop();
-          },
-        ),
-        title: const Text(
-          'Request to book',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-      ),
-      body: Column(
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSummaryCard(property, bookingState, currencyFormat),
-                  const SizedBox(height: 32),
-                  _buildPaymentMethodSection(bookingState),
-                  const SizedBox(height: 32),
-                  _buildPriceDetails(bookingState, property, currencyFormat),
-                  const SizedBox(height: 32),
-                  _buildCancellationPolicy(),
-                ],
-              ),
-            ),
-          ),
-          _buildBottomBar(context, ref, controller, bookingState),
+          _buildSummaryCard(property, bookingState, currencyFormat),
+          const SizedBox(height: 32),
+          _buildPaymentMethodSection(bookingState),
+          const SizedBox(height: 32),
+          _buildPriceDetails(bookingState, property, currencyFormat),
+          const SizedBox(height: 32),
+          _buildCancellationPolicy(),
         ],
       ),
     );
@@ -224,118 +193,5 @@ class RequestToBookScreen extends ConsumerWidget {
         ),
       ],
     );
-  }
-
-  Widget _buildBottomBar(BuildContext context, WidgetRef ref,
-      BookingController controller, BookingState bookingState) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: const Border(top: BorderSide(color: Colors.black12)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const BookingProgressBar(currentStep: 4),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  _showLoadingOverlay(context, ref, controller, bookingState);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  elevation: 0,
-                ),
-                child: const Text(
-                  'Request to book',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showLoadingOverlay(BuildContext context, WidgetRef ref,
-      BookingController controller, BookingState bookingState) async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircularProgressIndicator(color: Colors.white),
-            SizedBox(height: 16),
-            Text(
-              'Creating booking...',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                decoration: TextDecoration.none,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    try {
-      // Create pending booking
-      final user = ref.read(currentUserProvider).value!;
-      final booking = Booking(
-        id: '', // Repo handles ID
-        propertyId: property.id,
-        guestId: user.uid,
-        hostId: property.hostId,
-        startDate: bookingState.checkInDate,
-        endDate: bookingState.checkOutDate,
-        totalPrice: bookingState.totalPrice,
-        status: Booking.statusPending,
-        messageToHost: bookingState.messageToHost,
-        createdAt: DateTime.now(),
-      );
-
-      final bookingId =
-          await ref.read(bookingRepositoryProvider).createBooking(booking);
-
-      if (context.mounted) {
-        Navigator.of(context, rootNavigator: true).pop(); // Close overlay
-        controller.nextStep();
-        context.push('/booking/qris', extra: {
-          'property': property,
-          'bookingId': bookingId,
-        });
-      }
-    } catch (e) {
-      if (context.mounted) {
-        Navigator.of(context, rootNavigator: true).pop(); // Close overlay
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error creating booking: $e')),
-        );
-      }
-    }
   }
 }

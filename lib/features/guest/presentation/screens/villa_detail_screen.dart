@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -10,37 +11,54 @@ import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import 'package:villavibe/features/auth/data/repositories/auth_repository.dart';
 
-class VillaDetailScreen extends ConsumerWidget {
-  final String propertyId;
+import 'dart:async';
+import 'package:villavibe/core/presentation/widgets/three_dots_loader.dart';
 
-  const VillaDetailScreen({super.key, required this.propertyId});
+class VillaDetailScreen extends ConsumerStatefulWidget {
+  final Property property;
+
+  const VillaDetailScreen({super.key, required this.property});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final propertyAsync = ref.watch(propertyProvider(propertyId));
+  ConsumerState<VillaDetailScreen> createState() => _VillaDetailScreenState();
+}
+
+class _VillaDetailScreenState extends ConsumerState<VillaDetailScreen> {
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // Simulate network delay for premium feel
+    Future.delayed(const Duration(milliseconds: 800), () {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Watch for updates, but use passed property as initial data
+    final propertyAsync = ref.watch(propertyProvider(widget.property.id));
     final authState = ref.watch(authStateProvider);
+
+    // Use the latest data if available, otherwise use the passed property
+    final currentProperty = propertyAsync.value ?? widget.property;
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: propertyAsync.when(
-        data: (property) {
-          if (property == null) {
-            return const Center(child: Text('Property not found'));
-          }
-          return _buildContent(context, property);
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error: $err')),
+      body: _buildContent(context, currentProperty),
+      bottomNavigationBar: _buildBottomBar(
+        context,
+        currentProperty,
+        authState.maybeWhen(
+          data: (user) => user != null,
+          orElse: () => false,
+        ),
       ),
-      bottomNavigationBar: propertyAsync.value != null
-          ? _buildBottomBar(
-              context,
-              propertyAsync.value!,
-              authState.maybeWhen(
-                data: (user) => user != null,
-                orElse: () => false,
-              ))
-          : null,
     );
   }
 
@@ -54,31 +72,55 @@ class VillaDetailScreen extends ConsumerWidget {
               child: Container(
                 color: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 12),
-                    _buildHeader(property),
-                    const Divider(height: 48),
-                    _buildHostSection(property),
-                    const Divider(height: 48),
-                    _buildHighlights(),
-                    const Divider(height: 48),
-                    _buildDescription(property),
-                    const Divider(height: 48),
-                    _buildAmenities(property),
-                    const Divider(height: 48),
-                    _buildReviewsSection(property),
-                    const Divider(height: 48),
-                    _buildMeetYourHost(property),
-                    const Divider(height: 48),
-                    _buildAvailability(property),
-                    const Divider(height: 48),
-                    _buildThingsToKnow(property),
-                    const Divider(height: 48),
-                    _buildLocation(property),
-                    const SizedBox(height: 24),
-                  ],
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 600),
+                  switchInCurve: Curves.easeOutCubic,
+                  transitionBuilder: (child, animation) {
+                    return FadeTransition(
+                      opacity: animation,
+                      child: SlideTransition(
+                        position: Tween<Offset>(
+                          begin: const Offset(0, 0.1),
+                          end: Offset.zero,
+                        ).animate(animation),
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: _isLoading
+                      ? Container(
+                          key: const ValueKey('loader'),
+                          height: 400, // Placeholder height
+                          alignment: Alignment.center,
+                          child: const ThreeDotsLoader(size: 10),
+                        )
+                      : Column(
+                          key: const ValueKey('content'),
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 12),
+                            _buildHeader(property),
+                            const Divider(height: 48),
+                            _buildHostSection(property),
+                            const Divider(height: 48),
+                            _buildHighlights(),
+                            const Divider(height: 48),
+                            _buildDescription(property),
+                            const Divider(height: 48),
+                            _buildAmenities(property),
+                            const Divider(height: 48),
+                            _buildReviewsSection(property),
+                            const Divider(height: 48),
+                            _buildMeetYourHost(property),
+                            const Divider(height: 48),
+                            _buildAvailability(property),
+                            const Divider(height: 48),
+                            _buildThingsToKnow(property),
+                            const Divider(height: 48),
+                            _buildLocation(property),
+                            const SizedBox(height: 24),
+                          ],
+                        ),
                 ),
               ),
             ),
@@ -98,46 +140,53 @@ class VillaDetailScreen extends ConsumerWidget {
       elevation: 0,
       automaticallyImplyLeading: false,
       flexibleSpace: FlexibleSpaceBar(
-        background: Stack(
-          fit: StackFit.expand,
-          children: [
-            property.images.isNotEmpty
-                ? Hero(
-                    tag: 'property_image_${property.id}',
-                    child: Image.network(
-                      property.images.first,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) =>
-                          Container(color: Colors.grey[200]),
-                    ),
-                  )
-                : Container(color: Colors.grey[200]),
-            Positioned(
-              bottom: 40,
-              right: 16,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.7),
-                  borderRadius: BorderRadius.circular(4),
+        background: Hero(
+          tag: 'villa_img_${property.id}',
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              CachedNetworkImage(
+                imageUrl: property.images.first,
+                fit: BoxFit.cover,
+                fadeInDuration: Duration.zero, // Critical for seamless Hero
+                placeholder: (context, url) => Container(
+                  color: Colors.grey[200],
                 ),
-                child: Text(
-                  '1/${property.images.length}',
-                  style: const TextStyle(color: Colors.white, fontSize: 12),
+                errorWidget: (context, url, error) => Container(
+                  color: Colors.grey[200],
+                  child: const Icon(LucideIcons.image, color: Colors.grey),
                 ),
               ),
-            ),
-          ],
-        ),
-      ),
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(30),
-        child: Container(
-          height: 30,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+              Positioned(
+                bottom: 40,
+                right: 16,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.7),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    '1/${property.images.length}',
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: -1, // Slight overlap to prevent pixel bleeding
+                left: 0,
+                right: 0,
+                child: Container(
+                  height: 30,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(30)),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),

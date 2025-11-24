@@ -17,10 +17,11 @@ import 'package:villavibe/features/home/presentation/providers/search_provider.d
 import 'package:villavibe/features/home/presentation/widgets/destination_card.dart';
 import 'package:villavibe/features/home/presentation/widgets/home_hero_section.dart';
 import 'package:villavibe/features/home/presentation/widgets/search_filter_modal.dart';
-import 'package:villavibe/features/home/presentation/widgets/standard_bottom_nav_bar.dart'; // Pastikan ini StandardBottomNavBar
+import 'package:villavibe/features/home/presentation/widgets/standard_bottom_nav_bar.dart';
 import 'package:villavibe/features/home/presentation/widgets/top_search_bar.dart';
 import 'package:villavibe/features/properties/data/repositories/property_repository.dart';
 import 'package:villavibe/features/properties/domain/models/property.dart';
+import 'package:villavibe/features/home/presentation/widgets/villa_compact_card.dart';
 
 class GuestHomeScreen extends ConsumerStatefulWidget {
   final int initialIndex;
@@ -40,18 +41,14 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
     _currentNavIndex = widget.initialIndex;
   }
 
-  // --- LOGIC FIX: Handle Tab Change Properly ---
   void _onNavTapped(int index) {
     setState(() {
       _currentNavIndex = index;
-      // FORCE RESET: Matikan search setiap kali pindah tab
-      _isSearchActive = false; 
-      // Tutup Keyboard
+      _isSearchActive = false;
       FocusScope.of(context).unfocus();
     });
   }
 
-  // --- LOGIC FIX: Handle Back from Search ---
   void _onSearchBack() {
     setState(() {
       _isSearchActive = false;
@@ -78,7 +75,8 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
             return const LoginPromptView(
               title: 'Wishlists',
               subtitle: 'Log in to view your wishlists',
-              description: 'You can create, view, or edit wishlists once you\'ve logged in.',
+              description:
+                  'You can create, view, or edit wishlists once you\'ve logged in.',
             );
           }
           return const WishlistScreen();
@@ -87,7 +85,8 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
             return const LoginPromptView(
               title: 'Trips',
               subtitle: 'No trips yet',
-              description: 'When you\'re ready to plan your next trip, we\'re here to help.',
+              description:
+                  'When you\'re ready to plan your next trip, we\'re here to help.',
             );
           }
           return const MyBookingsScreen();
@@ -96,7 +95,8 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
             return const LoginPromptView(
               title: 'Inbox',
               subtitle: 'Log in to see messages',
-              description: 'Once you login, you\'ll find messages from hosts here.',
+              description:
+                  'Once you login, you\'ll find messages from hosts here.',
             );
           }
           return const Center(child: Text('Messages (Logged In)'));
@@ -112,8 +112,6 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
       }
     }
 
-    // LOGIC FIX: Nav Bar hanya hilang jika (Lagi Search DAN Sedang di Home)
-    // Di tab lain (Wishlist dll), Nav Bar SELALU MUNCUL.
     final bool shouldHideNavBar = _isSearchActive && _currentNavIndex == 0;
 
     return Scaffold(
@@ -122,8 +120,6 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
       body: Stack(
         children: [
           buildBody(),
-
-          // Search Bar Overlay (Hanya muncul di Home saat Search Aktif)
           if (_isSearchActive && _currentNavIndex == 0)
             Positioned(
               top: 0,
@@ -147,8 +143,6 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
             ),
         ],
       ),
-      
-      // Gunakan StandardBottomNavBar yang baru (Fixed Position)
       bottomNavigationBar: shouldHideNavBar
           ? null
           : StandardBottomNavBar(
@@ -163,8 +157,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
       physics: const BouncingScrollPhysics(),
       padding: EdgeInsets.only(
         top: _isSearchActive ? 100 : 0,
-        // Padding bawah secukupnya karena Nav Bar sekarang fixed (tidak menutupi konten)
-        bottom: 40, 
+        bottom: 40,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -177,19 +170,19 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                   _isSearchActive = true;
                 });
               },
-            ).animate().fadeIn(duration: 800.ms).slideY(begin: -0.1, end: 0, curve: Curves.easeOutQuad),
-
+            )
+                .animate()
+                .fadeIn(duration: 800.ms)
+                .slideY(begin: -0.1, end: 0, curve: Curves.easeOutQuad),
           const SizedBox(height: 24),
-          
           if (!_isSearchActive) ...[
             CategorySelector(
               onCategoryChanged: (category) {
-                print("User memilih kategori: $category"); 
+                print("User memilih kategori: $category");
               },
             ),
             const SizedBox(height: 32),
           ],
-
           propertiesAsync.when(
             data: (properties) {
               if (properties.isEmpty) {
@@ -198,11 +191,15 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                     padding: const EdgeInsets.all(32.0),
                     child: Column(
                       children: [
-                        const Icon(LucideIcons.searchX, size: 64, color: Colors.black12),
+                        const Icon(LucideIcons.searchX,
+                            size: 64, color: Colors.black12),
                         const SizedBox(height: 16),
                         const Text(
                           'No results found',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.black54),
+                          style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black54),
                         ),
                         const SizedBox(height: 16),
                         OutlinedButton(
@@ -220,13 +217,13 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                 children: [
                   _buildSection(
                     context,
-                    title: _isSearchActive ? 'Search Results' : 'Recommended for you',
+                    title: _isSearchActive
+                        ? 'Search Results'
+                        : 'Recommended for you',
                     properties: properties,
                     delay: 200.ms,
                   ),
-
                   const SizedBox(height: 40),
-
                   if (!_isSearchActive) ...[
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -235,15 +232,20 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                         children: [
                           const Text(
                             'Discover new places',
-                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, letterSpacing: -0.5),
+                            style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: -0.5),
                           ),
-                          Icon(LucideIcons.arrowRight, size: 20, color: Colors.grey[400]),
+                          Icon(LucideIcons.arrowRight,
+                              size: 20, color: Colors.grey[400]),
                         ],
                       ),
-                    ).animate().fadeIn(delay: 600.ms).slideX(begin: -0.1, end: 0),
-                    
+                    )
+                        .animate()
+                        .fadeIn(delay: 600.ms)
+                        .slideX(begin: -0.1, end: 0),
                     const SizedBox(height: 16),
-                    
                     SizedBox(
                       height: 220,
                       child: ListView(
@@ -251,9 +253,21 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                         physics: const BouncingScrollPhysics(),
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         children: [
-                          _buildAnimatedDestinationCard('https://images.unsplash.com/photo-1516483638261-f4dbaf036963?q=80&w=1972&auto=format&fit=crop', 'Bali', 0, context),
-                          _buildAnimatedDestinationCard('https://images.unsplash.com/photo-1506953823976-52e1fdc0149a?q=80&w=1935&auto=format&fit=crop', 'Malang', 1, context),
-                          _buildAnimatedDestinationCard('https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=2070&auto=format&fit=crop', 'Batu', 2, context),
+                          _buildAnimatedDestinationCard(
+                              'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?q=80&w=1972&auto=format&fit=crop',
+                              'Bali',
+                              0,
+                              context),
+                          _buildAnimatedDestinationCard(
+                              'https://images.unsplash.com/photo-1506953823976-52e1fdc0149a?q=80&w=1935&auto=format&fit=crop',
+                              'Malang',
+                              1,
+                              context),
+                          _buildAnimatedDestinationCard(
+                              'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=2070&auto=format&fit=crop',
+                              'Batu',
+                              2,
+                              context),
                         ],
                       ),
                     ),
@@ -269,7 +283,8 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
     );
   }
 
-  Widget _buildAnimatedDestinationCard(String url, String title, int index, BuildContext context) {
+  Widget _buildAnimatedDestinationCard(
+      String url, String title, int index, BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(right: 16),
       child: DestinationCard(
@@ -279,9 +294,10 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
           context.push('/destination', extra: {'name': title, 'image': url});
         },
       ),
-    ).animate()
-     .fadeIn(delay: (600 + (index * 100)).ms)
-     .slideX(begin: 0.2, end: 0, curve: Curves.easeOut);
+    )
+        .animate()
+        .fadeIn(delay: (600 + (index * 100)).ms)
+        .slideX(begin: 0.2, end: 0, curve: Curves.easeOut);
   }
 
   Widget _buildSection(
@@ -299,12 +315,11 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
             title,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, letterSpacing: -0.5),
+            style: const TextStyle(
+                fontSize: 20, fontWeight: FontWeight.w700, letterSpacing: -0.5),
           ),
         ).animate().fadeIn(delay: delay).slideY(begin: 0.2, end: 0),
-        
         const SizedBox(height: 16),
-        
         _isSearchActive
             ? ListView.builder(
                 shrinkWrap: true,
@@ -318,17 +333,18 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                     child: PropertyCard(
                       property: property,
                       onTap: () {
-                        context.push('/property/${property.id}', extra: property);
+                        context.push('/property/${property.id}',
+                            extra: property);
                       },
                     ),
                   )
-                  .animate()
-                  .fadeIn(delay: delay + (100 * index).ms)
-                  .slideY(begin: 0.2, end: 0, curve: Curves.easeOutCubic);
+                      .animate()
+                      .fadeIn(delay: delay + (100 * index).ms)
+                      .slideY(begin: 0.2, end: 0, curve: Curves.easeOutCubic);
                 },
               )
             : SizedBox(
-                height: 380,
+                height: 280,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
                   physics: const BouncingScrollPhysics(),
@@ -338,16 +354,17 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                     final property = properties[index];
                     return Padding(
                       padding: const EdgeInsets.only(right: 16.0),
-                      child: PropertyCard(
+                      child: VillaCompactCard(
                         property: property,
                         onTap: () {
-                          context.push('/property/${property.id}', extra: property);
+                          context.push('/property/${property.id}',
+                              extra: property);
                         },
                       ),
                     )
-                    .animate()
-                    .fadeIn(delay: delay + (100 * index).ms)
-                    .slideX(begin: 0.2, end: 0, curve: Curves.easeOutCubic);
+                        .animate()
+                        .fadeIn(delay: delay + (100 * index).ms)
+                        .slideX(begin: 0.2, end: 0, curve: Curves.easeOutCubic);
                   },
                 ),
               ),

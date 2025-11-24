@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:villavibe/features/bookings/presentation/controllers/booking_controller.dart';
-import 'package:villavibe/features/bookings/presentation/widgets/booking_progress_bar.dart';
 import 'package:villavibe/features/properties/domain/models/property.dart';
 
-class BookingReviewScreen extends ConsumerWidget {
+class BookingReviewContent extends ConsumerWidget {
   final Property property;
 
-  const BookingReviewScreen({super.key, required this.property});
+  const BookingReviewContent({super.key, required this.property});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -20,47 +18,29 @@ class BookingReviewScreen extends ConsumerWidget {
     final currencyFormat =
         NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(LucideIcons.arrowLeft, color: Colors.black),
-          onPressed: () => context.pop(),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-      ),
-      body: Column(
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Review and continue',
-                    style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF212121),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  _buildVillaSummaryCard(property),
-                  const SizedBox(height: 32),
-                  _buildTripDetailsSection(context, bookingState, controller),
-                  const SizedBox(height: 32),
-                  _buildPriceDetailsSection(
-                      context, bookingState, property, currencyFormat),
-                  const SizedBox(height: 32),
-                  _buildCancellationPolicy(),
-                  const SizedBox(height: 32),
-                ],
-              ),
+          const Text(
+            'Review and continue',
+            style: TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF212121),
             ),
           ),
-          _buildBottomBar(context, controller),
+          const SizedBox(height: 24),
+          _buildVillaSummaryCard(property),
+          const SizedBox(height: 32),
+          _buildTripDetailsSection(context, bookingState, controller),
+          const SizedBox(height: 32),
+          _buildPriceDetailsSection(
+              context, bookingState, property, currencyFormat),
+          const SizedBox(height: 32),
+          _buildCancellationPolicy(),
+          const SizedBox(height: 32),
         ],
       ),
     );
@@ -311,57 +291,6 @@ class BookingReviewScreen extends ConsumerWidget {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildBottomBar(BuildContext context, BookingController controller) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: const Border(top: BorderSide(color: Colors.black12)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const BookingProgressBar(currentStep: 1),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  controller.nextStep();
-                  context.push('/booking/payment', extra: property);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black, // Airbnb uses black for "Next"
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  elevation: 0,
-                ),
-                child: const Text(
-                  'Next',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 

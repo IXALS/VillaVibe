@@ -225,11 +225,17 @@ GoRouter router(RouterRef ref) {
       GoRoute(
         path: '/destination',
         builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>;
-          return DestinationDetailScreen(
-            destinationName: extra['name'],
-            imageUrl: extra['image'],
-          );
+          if (state.extra is Map<String, dynamic>) {
+            final extra = state.extra as Map<String, dynamic>;
+            return DestinationDetailScreen(
+              destinationName: extra['name'],
+              imageUrl: extra['image'],
+            );
+          } else {
+            return const Scaffold(
+              body: Center(child: Text('Error: Destination data missing')),
+            );
+          }
         },
       ),
     ],

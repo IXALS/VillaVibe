@@ -15,9 +15,9 @@ import 'package:villavibe/features/guest/presentation/widgets/login_prompt_view.
 import 'package:villavibe/features/guest/presentation/widgets/profile_login_view.dart';
 import 'package:villavibe/features/home/presentation/providers/search_provider.dart';
 import 'package:villavibe/features/home/presentation/widgets/destination_card.dart';
-import 'package:villavibe/features/home/presentation/widgets/floating_bottom_nav_bar.dart';
 import 'package:villavibe/features/home/presentation/widgets/home_hero_section.dart';
 import 'package:villavibe/features/home/presentation/widgets/search_filter_modal.dart';
+import 'package:villavibe/features/home/presentation/widgets/standard_bottom_nav_bar.dart'; // Pastikan ini StandardBottomNavBar
 import 'package:villavibe/features/home/presentation/widgets/top_search_bar.dart';
 import 'package:villavibe/features/properties/data/repositories/property_repository.dart';
 import 'package:villavibe/features/properties/domain/models/property.dart';
@@ -40,53 +40,67 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
     _currentNavIndex = widget.initialIndex;
   }
 
+  // --- LOGIC FIX: Handle Tab Change Properly ---
+  void _onNavTapped(int index) {
+    setState(() {
+      _currentNavIndex = index;
+      // FORCE RESET: Matikan search setiap kali pindah tab
+      _isSearchActive = false; 
+      // Tutup Keyboard
+      FocusScope.of(context).unfocus();
+    });
+  }
+
+  // --- LOGIC FIX: Handle Back from Search ---
+  void _onSearchBack() {
+    setState(() {
+      _isSearchActive = false;
+    });
+    ref.read(searchFilterStateProvider.notifier).reset();
+    FocusScope.of(context).unfocus();
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Watch both providers
     final allPropertiesAsync = ref.watch(allPropertiesProvider);
     final filteredPropertiesAsync = ref.watch(filteredPropertiesProvider);
-
     final userAsync = ref.watch(currentUserProvider);
     final user = userAsync.value;
 
     Widget buildBody() {
       switch (_currentNavIndex) {
-        case 0: // Explore
-          // Use filtered properties ONLY if search is active
+        case 0:
           return _buildExploreContent(
             _isSearchActive ? filteredPropertiesAsync : allPropertiesAsync,
           );
-        case 1: // Wishlists
+        case 1:
           if (user == null) {
             return const LoginPromptView(
               title: 'Wishlists',
               subtitle: 'Log in to view your wishlists',
-              description:
-                  'You can create, view, or edit wishlists once you\'ve logged in.',
+              description: 'You can create, view, or edit wishlists once you\'ve logged in.',
             );
           }
           return const WishlistScreen();
-        case 2: // Trips
+        case 2:
           if (user == null) {
             return const LoginPromptView(
               title: 'Trips',
               subtitle: 'No trips yet',
-              description:
-                  'When you\'re ready to plan your next trip, we\'re here to help.',
+              description: 'When you\'re ready to plan your next trip, we\'re here to help.',
             );
           }
           return const MyBookingsScreen();
-        case 3: // Messages
+        case 3:
           if (user == null) {
             return const LoginPromptView(
               title: 'Inbox',
               subtitle: 'Log in to see messages',
-              description:
-                  'Once you login, you\'ll find messages from hosts here.',
+              description: 'Once you login, you\'ll find messages from hosts here.',
             );
           }
           return const Center(child: Text('Messages (Logged In)'));
-        case 4: // Profile
+        case 4:
           if (user == null) {
             return const ProfileLoginView();
           }
@@ -98,25 +112,25 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
       }
     }
 
+    // LOGIC FIX: Nav Bar hanya hilang jika (Lagi Search DAN Sedang di Home)
+    // Di tab lain (Wishlist dll), Nav Bar SELALU MUNCUL.
+    final bool shouldHideNavBar = _isSearchActive && _currentNavIndex == 0;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F7F7),
+      resizeToAvoidBottomInset: false,
+      backgroundColor: const Color(0xFFFAFAFA),
       body: Stack(
         children: [
           buildBody(),
 
-          // Top Search Bar (only visible when search is active)
-          if (_isSearchActive)
+          // Search Bar Overlay (Hanya muncul di Home saat Search Aktif)
+          if (_isSearchActive && _currentNavIndex == 0)
             Positioned(
               top: 0,
               left: 0,
               right: 0,
               child: TopSearchBar(
-                onBack: () {
-                  setState(() {
-                    _isSearchActive = false;
-                  });
-                  ref.read(searchFilterStateProvider.notifier).reset();
-                },
+                onBack: _onSearchBack,
                 onFilterTap: () {
                   WoltModalSheet.show(
                     context: context,
@@ -129,38 +143,32 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                     },
                   );
                 },
-              ),
+              ).animate().fadeIn(duration: 200.ms).slideY(begin: -0.2, end: 0),
             ),
-
-          // Bottom Nav (hidden when search is active)
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: FloatingBottomNavBar(
-              currentIndex: _currentNavIndex,
-              onTap: (index) {
-                setState(() {
-                  _currentNavIndex = index;
-                });
-              },
-            ),
-          ),
         ],
       ),
+      
+      // Gunakan StandardBottomNavBar yang baru (Fixed Position)
+      bottomNavigationBar: shouldHideNavBar
+          ? null
+          : StandardBottomNavBar(
+              currentIndex: _currentNavIndex,
+              onTap: _onNavTapped,
+            ),
     );
   }
 
   Widget _buildExploreContent(AsyncValue<List<Property>> propertiesAsync) {
     return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
       padding: EdgeInsets.only(
-        top: _isSearchActive ? 100 : 0, // Add padding for search bar
-        bottom: 100, // Space for floating nav
+        top: _isSearchActive ? 100 : 0,
+        // Padding bawah secukupnya karena Nav Bar sekarang fixed (tidak menutupi konten)
+        bottom: 40, 
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Hero Section (Only show if search is NOT active)
           if (!_isSearchActive)
             HomeHeroSection(
               user: ref.watch(currentUserProvider).value,
@@ -169,15 +177,19 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                   _isSearchActive = true;
                 });
               },
-            ).animate().fadeIn(duration: 600.ms),
+            ).animate().fadeIn(duration: 800.ms).slideY(begin: -0.1, end: 0, curve: Curves.easeOutQuad),
 
           const SizedBox(height: 24),
+          
           if (!_isSearchActive) ...[
-            const CategorySelector(),
-            const SizedBox(height: 24),
+            CategorySelector(
+              onCategoryChanged: (category) {
+                print("User memilih kategori: $category"); 
+              },
+            ),
+            const SizedBox(height: 32),
           ],
 
-          // Content
           propertiesAsync.when(
             data: (properties) {
               if (properties.isEmpty) {
@@ -186,97 +198,65 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                     padding: const EdgeInsets.all(32.0),
                     child: Column(
                       children: [
-                        const Icon(LucideIcons.searchX,
-                            size: 48, color: Colors.grey),
+                        const Icon(LucideIcons.searchX, size: 64, color: Colors.black12),
                         const SizedBox(height: 16),
                         const Text(
                           'No results found',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.grey,
-                          ),
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.black54),
                         ),
-                        const SizedBox(height: 8),
-                        TextButton(
-                          onPressed: () {
-                            // Clear filters but keep search active if they want to try another query
-                            // Or maybe just clear query?
-                            ref
-                                .read(searchFilterStateProvider.notifier)
-                                .reset();
-                            // If we reset, we might want to exit search mode too?
-                            // Let's just clear filters for now.
-                          },
+                        const SizedBox(height: 16),
+                        OutlinedButton(
+                          onPressed: _onSearchBack,
                           child: const Text('Clear Filters'),
                         ),
                       ],
                     ),
-                  ),
+                  ).animate().fadeIn().scale(),
                 );
               }
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // "The most relevant" section (or "Search Results" if active)
                   _buildSection(
                     context,
-                    title: _isSearchActive
-                        ? 'Search Results'
-                        : 'The most relevant',
+                    title: _isSearchActive ? 'Search Results' : 'Recommended for you',
                     properties: properties,
                     delay: 200.ms,
                   ),
 
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 40),
 
-                  // "Discover new places" section - Hide if search is active
                   if (!_isSearchActive) ...[
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        'Discover new places',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    )
-                        .animate()
-                        .fadeIn(delay: 400.ms)
-                        .slideX(begin: -0.1, end: 0),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      height: 180,
-                      child: ListView(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          DestinationCard(
-                            imageUrl:
-                                'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?q=80&w=1972&auto=format&fit=crop', // Cinque Terre
-                            title: 'Cinque Terre',
-                            onTap: () {},
+                          const Text(
+                            'Discover new places',
+                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, letterSpacing: -0.5),
                           ),
-                          DestinationCard(
-                            imageUrl:
-                                'https://images.unsplash.com/photo-1506953823976-52e1fdc0149a?q=80&w=1935&auto=format&fit=crop', // Beach
-                            title: 'Bali',
-                            onTap: () {},
-                          ),
-                          DestinationCard(
-                            imageUrl:
-                                'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=2070&auto=format&fit=crop', // Mountains
-                            title: 'Swiss Alps',
-                            onTap: () {},
-                          ),
+                          Icon(LucideIcons.arrowRight, size: 20, color: Colors.grey[400]),
                         ],
                       ),
-                    )
-                        .animate()
-                        .fadeIn(delay: 500.ms)
-                        .slideX(begin: 0.1, end: 0),
+                    ).animate().fadeIn(delay: 600.ms).slideX(begin: -0.1, end: 0),
+                    
+                    const SizedBox(height: 16),
+                    
+                    SizedBox(
+                      height: 220,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        children: [
+                          _buildAnimatedDestinationCard('https://images.unsplash.com/photo-1516483638261-f4dbaf036963?q=80&w=1972&auto=format&fit=crop', 'Bali', 0, context),
+                          _buildAnimatedDestinationCard('https://images.unsplash.com/photo-1506953823976-52e1fdc0149a?q=80&w=1935&auto=format&fit=crop', 'Malang', 1, context),
+                          _buildAnimatedDestinationCard('https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=2070&auto=format&fit=crop', 'Batu', 2, context),
+                        ],
+                      ),
+                    ),
                   ],
                 ],
               );
@@ -287,6 +267,21 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildAnimatedDestinationCard(String url, String title, int index, BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 16),
+      child: DestinationCard(
+        imageUrl: url,
+        title: title,
+        onTap: () {
+          context.push('/destination', extra: {'name': title, 'image': url});
+        },
+      ),
+    ).animate()
+     .fadeIn(delay: (600 + (index * 100)).ms)
+     .slideX(begin: 0.2, end: 0, curve: Curves.easeOut);
   }
 
   Widget _buildSection(
@@ -302,29 +297,14 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              if (!_isSearchActive) ...[
-                const SizedBox(width: 8),
-                const Icon(LucideIcons.chevronRight,
-                    size: 16, color: Colors.black),
-              ],
-            ],
+          child: Text(
+            title,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, letterSpacing: -0.5),
           ),
-        ).animate().fadeIn(delay: delay).slideX(begin: -0.1, end: 0),
+        ).animate().fadeIn(delay: delay).slideY(begin: 0.2, end: 0),
+        
         const SizedBox(height: 16),
-        // If search is active, use vertical list, otherwise horizontal
+        
         _isSearchActive
             ? ListView.builder(
                 shrinkWrap: true,
@@ -334,38 +314,40 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                 itemBuilder: (context, index) {
                   final property = properties[index];
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: 16.0),
+                    padding: const EdgeInsets.only(bottom: 24.0),
                     child: PropertyCard(
                       property: property,
                       onTap: () {
-                        context.push('/property/${property.id}',
-                            extra: property);
+                        context.push('/property/${property.id}', extra: property);
                       },
                     ),
                   )
-                      .animate()
-                      .fadeIn(delay: delay + (100 * index).ms)
-                      .slideX(begin: 0.1, end: 0);
+                  .animate()
+                  .fadeIn(delay: delay + (100 * index).ms)
+                  .slideY(begin: 0.2, end: 0, curve: Curves.easeOutCubic);
                 },
               )
             : SizedBox(
-                height: 360,
+                height: 380,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   itemCount: properties.length,
                   itemBuilder: (context, index) {
                     final property = properties[index];
-                    return PropertyCard(
-                      property: property,
-                      onTap: () {
-                        context.push('/property/${property.id}',
-                            extra: property);
-                      },
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 16.0),
+                      child: PropertyCard(
+                        property: property,
+                        onTap: () {
+                          context.push('/property/${property.id}', extra: property);
+                        },
+                      ),
                     )
-                        .animate()
-                        .fadeIn(delay: delay + (100 * index).ms)
-                        .slideX(begin: 0.1, end: 0);
+                    .animate()
+                    .fadeIn(delay: delay + (100 * index).ms)
+                    .slideX(begin: 0.2, end: 0, curve: Curves.easeOutCubic);
                   },
                 ),
               ),

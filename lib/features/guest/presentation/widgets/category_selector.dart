@@ -1,38 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:flutter_animate/flutter_animate.dart'; // Pastikan import ini ada
 import '../../domain/models/category.dart';
 
 class CategorySelector extends StatefulWidget {
-  const CategorySelector({super.key});
+  final Function(String category) onCategoryChanged;
+
+  const CategorySelector({
+    super.key,
+    required this.onCategoryChanged,
+  });
 
   @override
   State<CategorySelector> createState() => _CategorySelectorState();
 }
 
 class _CategorySelectorState extends State<CategorySelector> {
-  // Index kategori yang lagi dipilih (0 = All)
   int _selectedIndex = 0;
 
-  // Data Kategori (Icon + Nama)
   final List<Category> _categories = const [
     Category(icon: LucideIcons.layoutGrid, label: 'All'),
     Category(icon: LucideIcons.waves, label: 'Beach'),
     Category(icon: LucideIcons.mountain, label: 'Mountain'),
     Category(icon: LucideIcons.building2, label: 'City'),
     Category(icon: LucideIcons.tent, label: 'Camping'),
-    Category(icon: LucideIcons.snowflake, label: 'Arctic'),
     Category(icon: LucideIcons.palmtree, label: 'Tropical'),
   ];
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 40, // Tinggi area scroll
+      height: 44, // Sedikit lebih tinggi biar lega
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 24), // Padding kiri-kanan layar
+        padding: const EdgeInsets.symmetric(horizontal: 24),
         itemCount: _categories.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 12), // Jarak antar tombol
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
         itemBuilder: (context, index) {
           final category = _categories[index];
           final isSelected = _selectedIndex == index;
@@ -40,45 +43,62 @@ class _CategorySelectorState extends State<CategorySelector> {
           return Material(
             color: Colors.transparent,
             child: InkWell(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(30),
               onTap: () {
                 setState(() {
                   _selectedIndex = index;
                 });
-                // Nanti di sini kita tambahkan logic filter villa
+                widget.onCategoryChanged(category.label);
               },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              // ✨ MAGISNYA DI SINI: AnimatedContainer ✨
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOutCubic, // Kurva animasi biar 'membal' dikit
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 decoration: BoxDecoration(
-                  color: isSelected ? Colors.black : Colors.white,
-                  borderRadius: BorderRadius.circular(20), // Rounded pill shape
+                  color: isSelected ? const Color(0xFF1A1A1A) : Colors.white,
+                  borderRadius: BorderRadius.circular(30), // Lebih bulat (Pill shape modern)
                   border: Border.all(
-                    color: isSelected ? Colors.black : Colors.grey[300]!,
+                    color: isSelected ? Colors.transparent : Colors.grey[300]!,
+                    width: 1,
                   ),
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
+                            color: Colors.black.withValues(alpha: 0.2),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          )
+                        ]
+                      : [
+                          BoxShadow(
+                            color: Colors.grey.withValues(alpha: 0.05),
                             blurRadius: 4,
                             offset: const Offset(0, 2),
                           )
-                        ]
-                      : null,
+                        ],
                 ),
                 child: Row(
                   children: [
-                    Icon(
-                      category.icon,
-                      size: 16,
-                      color: isSelected ? Colors.white : Colors.black87,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      category.label,
+                    // Icon juga dianimasikan warnanya
+                    AnimatedDefaultTextStyle(
+                      duration: const Duration(milliseconds: 200),
                       style: TextStyle(
-                        color: isSelected ? Colors.white : Colors.black87,
+                        color: isSelected ? Colors.white : const Color(0xFF4A4A4A),
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
+                        fontFamily: 'Nunito', // Opsional kalau pakai font custom
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            category.icon,
+                            size: 18,
+                            color: isSelected ? Colors.white : const Color(0xFF4A4A4A),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(category.label),
+                        ],
                       ),
                     ),
                   ],
@@ -88,6 +108,6 @@ class _CategorySelectorState extends State<CategorySelector> {
           );
         },
       ),
-    );
+    ).animate().fadeIn(duration: 400.ms).slideX(begin: 0.2, end: 0, curve: Curves.easeOut);
   }
 }

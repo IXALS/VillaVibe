@@ -1,11 +1,15 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:intl/intl.dart';
+import 'package:villavibe/features/auth/data/repositories/auth_repository.dart';
+import 'package:villavibe/features/auth/presentation/widgets/login_modal.dart';
+import 'package:villavibe/features/favorites/data/repositories/favorite_repository.dart';
 import 'package:villavibe/features/properties/domain/models/property.dart';
 
-class VillaCompactCard extends StatefulWidget {
+class VillaCompactCard extends ConsumerStatefulWidget {
   final Property property;
   final VoidCallback? onTap;
 
@@ -16,10 +20,10 @@ class VillaCompactCard extends StatefulWidget {
   });
 
   @override
-  State<VillaCompactCard> createState() => _VillaCompactCardState();
+  ConsumerState<VillaCompactCard> createState() => _VillaCompactCardState();
 }
 
-class _VillaCompactCardState extends State<VillaCompactCard>
+class _VillaCompactCardState extends ConsumerState<VillaCompactCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
@@ -49,6 +53,10 @@ class _VillaCompactCardState extends State<VillaCompactCard>
       symbol: 'Rp ',
       decimalDigits: 0,
     );
+
+    final userAsync = ref.watch(currentUserProvider);
+    final user = userAsync.value;
+    final isFavorite = user?.savedVillas.contains(widget.property.id) ?? false;
 
     return GestureDetector(
       onTapDown: (_) => _controller.forward(),
@@ -97,16 +105,27 @@ class _VillaCompactCardState extends State<VillaCompactCard>
                   Positioned(
                     top: 12,
                     right: 12,
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.3),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        LucideIcons.heart,
-                        color: Colors.white,
-                        size: 20, // Slightly smaller to fit in circle
+                    child: GestureDetector(
+                      onTap: () {
+                        if (user == null) {
+                          showLoginModal(context);
+                        } else {
+                          ref
+                              .read(favoriteRepositoryProvider)
+                              .toggleFavorite(widget.property.id);
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.3),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          isFavorite ? Icons.favorite : LucideIcons.heart,
+                          color: isFavorite ? Colors.red : Colors.white,
+                          size: 20, // Slightly smaller to fit in circle
+                        ),
                       ),
                     ),
                   ),

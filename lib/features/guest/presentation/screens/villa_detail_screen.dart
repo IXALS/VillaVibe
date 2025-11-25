@@ -149,59 +149,65 @@ class _VillaDetailScreenState extends ConsumerState<VillaDetailScreen> {
       flexibleSpace: FlexibleSpaceBar(
         background: Hero(
           tag: 'villa_img_${property.id}',
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              property.images.isNotEmpty
-                  ? CachedNetworkImage(
-                      imageUrl: property.images.first,
-                      fit: BoxFit.cover,
-                      fadeInDuration: Duration.zero,
-                      placeholder: (context, url) => Container(
-                        color: Colors.grey[200],
-                      ),
-                      errorWidget: (context, url, error) => Container(
+          child: Material(
+            type: MaterialType.transparency,
+            child: Stack(
+              fit: StackFit.expand,
+              clipBehavior: Clip.antiAlias,
+              children: [
+                property.images.isNotEmpty
+                    ? CachedNetworkImage(
+                        imageUrl: property.images.first,
+                        fit: BoxFit.cover,
+                        fadeInDuration: Duration.zero,
+                        placeholder: (context, url) => Container(
+                          color: Colors.grey[200],
+                        ),
+                        errorWidget: (context, url, error) => Container(
+                          color: Colors.grey[200],
+                          child:
+                              const Icon(LucideIcons.image, color: Colors.grey),
+                        ),
+                      )
+                    : Container(
                         color: Colors.grey[200],
                         child:
                             const Icon(LucideIcons.image, color: Colors.grey),
                       ),
-                    )
-                  : Container(
-                      color: Colors.grey[200],
-                      child: const Icon(LucideIcons.image, color: Colors.grey),
+                if (property.images.isNotEmpty)
+                  Positioned(
+                    bottom: 40 + 32, // Adjusted for the bottom rounded cap
+                    right: 16,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.7),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        '1/${property.images.length}',
+                        style:
+                            const TextStyle(color: Colors.white, fontSize: 12),
+                      ),
                     ),
-              if (property.images.isNotEmpty)
+                  ),
+                // Fake Cap for Hero Transition Smoothness
                 Positioned(
-                  bottom: 40 + 32, // Adjusted for the bottom rounded cap
-                  right: 16,
+                  bottom: -1, // Slight overlap to prevent gaps
+                  left: 0,
+                  right: 0,
+                  height: 33, // +1px to ensure full coverage
                   child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.7),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      '1/${property.images.length}',
-                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius:
+                          BorderRadius.vertical(top: Radius.circular(32)),
                     ),
                   ),
                 ),
-              // Fake Cap for Hero Transition Smoothness
-              Positioned(
-                bottom: -1, // Slight overlap to prevent gaps
-                left: 0,
-                right: 0,
-                height: 33, // +1px to ensure full coverage
-                child: Container(
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius:
-                        BorderRadius.vertical(top: Radius.circular(32)),
-                  ),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

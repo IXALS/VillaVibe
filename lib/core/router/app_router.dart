@@ -88,7 +88,17 @@ GoRouter router(RouterRef ref) {
       GoRoute(
         path: '/property/:id',
         builder: (context, state) {
-          final property = state.extra as Property?;
+          Property? property;
+          String? heroTagPrefix;
+
+          if (state.extra is Property) {
+            property = state.extra as Property;
+          } else if (state.extra is Map<String, dynamic>) {
+            final map = state.extra as Map<String, dynamic>;
+            property = map['property'] as Property?;
+            heroTagPrefix = map['heroTagPrefix'] as String?;
+          }
+
           if (property == null) {
             return const Scaffold(
               body: Center(
@@ -96,7 +106,10 @@ GoRouter router(RouterRef ref) {
                       'Error: Property data missing (Deep link not supported yet)')),
             );
           }
-          return VillaDetailScreen(property: property);
+          return VillaDetailScreen(
+            property: property,
+            heroTagPrefix: heroTagPrefix,
+          );
         },
       ),
       GoRoute(

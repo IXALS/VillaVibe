@@ -10,22 +10,26 @@ class SearchFilter {
   final String query;
   final RangeValues priceRange;
   final bool isFilterActive;
+  final String? selectedCategory;
 
   const SearchFilter({
     this.query = '',
     this.priceRange = SearchConstants.defaultPriceRange,
     this.isFilterActive = false,
+    this.selectedCategory,
   });
 
   SearchFilter copyWith({
     String? query,
     RangeValues? priceRange,
     bool? isFilterActive,
+    String? selectedCategory,
   }) {
     return SearchFilter(
       query: query ?? this.query,
       priceRange: priceRange ?? this.priceRange,
       isFilterActive: isFilterActive ?? this.isFilterActive,
+      selectedCategory: selectedCategory ?? this.selectedCategory,
     );
   }
 
@@ -36,15 +40,19 @@ class SearchFilter {
     return other is SearchFilter &&
         other.query == query &&
         other.priceRange == priceRange &&
-        other.isFilterActive == isFilterActive;
+        other.isFilterActive == isFilterActive &&
+        other.selectedCategory == selectedCategory;
   }
 
   @override
   int get hashCode =>
-      query.hashCode ^ priceRange.hashCode ^ isFilterActive.hashCode;
+      query.hashCode ^
+      priceRange.hashCode ^
+      isFilterActive.hashCode ^
+      selectedCategory.hashCode;
 }
 
-@Riverpod(keepAlive: true)
+@Riverpod(keepAlive: false)
 class SearchFilterState extends _$SearchFilterState {
   @override
   SearchFilter build() {
@@ -60,6 +68,19 @@ class SearchFilterState extends _$SearchFilterState {
     state = state.copyWith(priceRange: range, isFilterActive: true);
   }
 
+  void setCategory(String? categoryId) {
+    final isDefaultPrice = state.priceRange == SearchConstants.defaultPriceRange;
+    final isDefaultQuery = state.query.isEmpty;
+    final isDefaultCategory = categoryId == null;
+
+    state = SearchFilter(
+      query: state.query,
+      priceRange: state.priceRange,
+      isFilterActive: !(isDefaultPrice && isDefaultQuery && isDefaultCategory),
+      selectedCategory: categoryId,
+    );
+  }
+
   void reset() {
     state = const SearchFilter();
   }
@@ -72,7 +93,9 @@ Future<List<Property>> filteredProperties(FilteredPropertiesRef ref) async {
 
   
 
-  if (!filter.isFilterActive && filter.query.isEmpty) {
+  if (!filter.isFilterActive &&
+      filter.query.isEmpty &&
+      filter.selectedCategory == null) {
     return allProperties;
   }
 
@@ -88,7 +111,16 @@ Future<List<Property>> filteredProperties(FilteredPropertiesRef ref) async {
 
     final matchesPrice = property.pricePerNight >= filter.priceRange.start &&
         property.pricePerNight <= filter.priceRange.end;
+    
+    if (!matchesPrice) {
+       print('Price mismatch for ${property.name}: ${property.pricePerNight} not in ${filter.priceRange}');
+    }
 
-    return matchesQuery && matchesPrice;
+    bool matchesCategory = true;
+    if (filter.selectedCategory != null && filter.selectedCategory!.isNotEmpty) {
+      matchesCategory = property.categoryId == filter.selectedCategory;
+    }
+
+    return matchesQuery && matchesPrice && matchesCategory;
   }).toList();
 }

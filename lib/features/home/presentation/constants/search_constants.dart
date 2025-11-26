@@ -8,7 +8,7 @@ class SearchConstants {
   static const double minPrice = 0;
 
   /// Maximum price for property search filter
-  static const double maxPrice = 3000;
+  static const double maxPrice = 50000000;
 
   /// Default price range for search filter
   static const RangeValues defaultPriceRange = RangeValues(minPrice, maxPrice);

@@ -17,7 +17,10 @@ class VillaCompactCard extends ConsumerStatefulWidget {
     super.key,
     required this.property,
     this.onTap,
+    this.heroTagPrefix,
   });
+
+  final String? heroTagPrefix;
 
   @override
   ConsumerState<VillaCompactCard> createState() => _VillaCompactCardState();
@@ -78,7 +81,7 @@ class _VillaCompactCardState extends ConsumerState<VillaCompactCard>
                   AspectRatio(
                     aspectRatio: 1.0, // Square 1:1
                     child: Hero(
-                      tag: 'villa_img_${widget.property.id}',
+                      tag: '${widget.heroTagPrefix ?? ''}villa_img_${widget.property.id}',
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(16),
                         child: widget.property.images.isNotEmpty

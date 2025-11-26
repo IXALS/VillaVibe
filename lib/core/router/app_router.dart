@@ -16,6 +16,8 @@ import 'package:villavibe/features/bookings/presentation/screens/booking_flow_wr
 import 'package:villavibe/features/bookings/presentation/screens/booking_success_screen.dart';
 import 'package:villavibe/features/bookings/presentation/screens/qris_payment_screen.dart';
 import 'package:villavibe/features/properties/domain/models/property.dart';
+import 'package:villavibe/features/search/presentation/screens/search_screen.dart';
+import 'package:villavibe/features/search/presentation/screens/search_results_screen.dart';
 
 part 'app_router.g.dart';
 
@@ -182,6 +184,29 @@ GoRouter router(RouterRef ref) {
             );
           }
         },
+      ),
+      GoRoute(
+        path: '/search',
+        pageBuilder: (context, state) {
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: const SearchScreen(),
+            opaque: false,
+            barrierColor: Colors.black.withOpacity(0.2),
+            transitionDuration: const Duration(milliseconds: 400),
+            reverseTransitionDuration: const Duration(milliseconds: 400),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+              return child;
+            },
+          );
+        },
+        routes: [
+           GoRoute(
+            path: 'results',
+            builder: (context, state) => const SearchResultsScreen(),
+          ),
+        ]
       ),
     ],
   );

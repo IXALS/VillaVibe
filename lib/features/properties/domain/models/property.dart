@@ -67,9 +67,12 @@ class Property {
   final int priceTotal;
   final String dateRangeText;
 
+  final String categoryId;
+
   Property({
     required this.id,
     required this.hostId,
+    this.categoryId = '',
     required this.name,
     required this.description,
     required this.pricePerNight,
@@ -100,6 +103,7 @@ class Property {
     return Property(
       id: doc.id,
       hostId: data['hostId'] ?? '',
+      categoryId: data['categoryId'] ?? '',
       name: data['name'] ?? '',
       description: data['description'] ?? '',
       pricePerNight: data['pricePerNight'] ?? 0,
@@ -132,6 +136,7 @@ class Property {
   Map<String, dynamic> toMap() {
     return {
       'hostId': hostId,
+      'categoryId': categoryId,
       'name': name,
       'description': description,
       'pricePerNight': pricePerNight,

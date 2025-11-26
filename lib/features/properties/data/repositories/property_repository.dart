@@ -16,6 +16,7 @@ class PropertyRepository {
     final newProperty = Property(
       id: docRef.id,
       hostId: property.hostId,
+      categoryId: property.categoryId,
       name: property.name,
       description: property.description,
       pricePerNight: property.pricePerNight,

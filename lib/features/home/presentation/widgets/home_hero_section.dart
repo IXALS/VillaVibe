@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:villavibe/features/auth/domain/models/app_user.dart';
 import 'package:villavibe/features/home/presentation/widgets/home_search_container.dart';
 
@@ -22,8 +23,7 @@ class HomeHeroSection extends StatelessWidget {
         children: [
           // Background Image
           Positioned.fill(
-            bottom:
-                40, // Leave space for the curve/overlap if needed, or just fill
+            bottom: 0,
             child: ClipRRect(
               borderRadius: const BorderRadius.only(
                 bottomLeft: Radius.circular(32),
@@ -43,7 +43,7 @@ class HomeHeroSection extends StatelessWidget {
 
           // Gradient Overlay
           Positioned.fill(
-            bottom: 40,
+            bottom: 0,
             child: Container(
               decoration: BoxDecoration(
                 borderRadius: const BorderRadius.only(
@@ -105,12 +105,23 @@ class HomeHeroSection extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                     height: 1.2,
                   ),
-                ),
+                ).animate().fadeIn(duration: 600.ms).slideX(
+                      begin: -0.2,
+                      end: 0,
+                      curve: Curves.easeOutBack,
+                    ),
 
                 const SizedBox(height: 30), // Reduced spacing
 
                 // Search Container
-                HomeSearchContainer(onTap: onSearchTap),
+                HomeSearchContainer(onTap: onSearchTap)
+                    .animate()
+                    .fadeIn(delay: 200.ms, duration: 600.ms)
+                    .slideY(
+                      begin: 0.2,
+                      end: 0,
+                      curve: Curves.easeOutBack,
+                    ),
               ],
             ),
           ),

@@ -16,8 +16,13 @@ import 'package:villavibe/core/presentation/widgets/three_dots_loader.dart';
 
 class VillaDetailScreen extends ConsumerStatefulWidget {
   final Property property;
+  final String? heroTagPrefix;
 
-  const VillaDetailScreen({super.key, required this.property});
+  const VillaDetailScreen({
+    super.key,
+    required this.property,
+    this.heroTagPrefix,
+  });
 
   @override
   ConsumerState<VillaDetailScreen> createState() => _VillaDetailScreenState();
@@ -148,7 +153,7 @@ class _VillaDetailScreenState extends ConsumerState<VillaDetailScreen> {
       automaticallyImplyLeading: false,
       flexibleSpace: FlexibleSpaceBar(
         background: Hero(
-          tag: 'villa_img_${property.id}',
+          tag: '${widget.heroTagPrefix ?? ''}villa_img_${property.id}',
           child: Material(
             type: MaterialType.transparency,
             child: Stack(

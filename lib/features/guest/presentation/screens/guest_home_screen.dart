@@ -8,6 +8,7 @@ import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 import 'package:villavibe/features/auth/data/repositories/auth_repository.dart';
 import 'package:villavibe/features/bookings/presentation/screens/my_bookings_screen.dart';
 import 'package:villavibe/features/favorites/presentation/screens/wishlist_screen.dart';
+import 'package:villavibe/features/guest/data/repositories/category_repository.dart';
 import 'package:villavibe/features/guest/presentation/widgets/authenticated_profile_view.dart';
 import 'package:villavibe/features/guest/presentation/widgets/category_selector.dart';
 import 'package:villavibe/features/guest/presentation/widgets/login_prompt_view.dart';
@@ -67,7 +68,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
       switch (_currentNavIndex) {
         case 0:
           return _buildExploreContent(
-            _isSearchActive ? filteredPropertiesAsync : allPropertiesAsync,
+            filteredPropertiesAsync,
           );
         case 1:
           if (user == null) {
@@ -118,7 +119,13 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
       backgroundColor: const Color(0xFFFAFAFA),
       body: Stack(
         children: [
-          buildBody(),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            child: KeyedSubtree(
+              key: ValueKey<int>(_currentNavIndex),
+              child: buildBody(),
+            ),
+          ),
           if (_isSearchActive && _currentNavIndex == 0)
             Positioned(
               top: 0,
@@ -153,6 +160,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
 
   Widget _buildExploreContent(AsyncValue<List<Property>> propertiesAsync) {
     return SingleChildScrollView(
+      key: const PageStorageKey('explore_scroll'),
       physics: const BouncingScrollPhysics(),
       padding: EdgeInsets.only(
         top: _isSearchActive ? 100 : 0,
@@ -169,20 +177,32 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                   _isSearchActive = true;
                 });
               },
-            )
-                .animate()
-                .fadeIn(duration: 800.ms)
-                .slideY(begin: -0.1, end: 0, curve: Curves.easeOutQuad),
-          const SizedBox(height: 24),
-          if (!_isSearchActive) ...[
-            CategorySelector(
-              onCategoryChanged: (category) {
-                print("User memilih kategori: $category");
-              },
             ),
-            const SizedBox(height: 32),
-          ],
+          const SizedBox(height: 16),
+          if (!_isSearchActive)
+            ref.watch(categoriesProvider).when(
+                  data: (categories) => CategorySelector(
+                    categories: categories,
+                    onCategoryChanged: (category) {
+                      if (category.label == 'All') {
+                        ref
+                            .read(searchFilterStateProvider.notifier)
+                            .setCategory(null);
+                      } else {
+                        ref
+                            .read(searchFilterStateProvider.notifier)
+                            .setCategory(category.id);
+                      }
+                    },
+                  ),
+                  loading: () => const SizedBox(
+                      height: 44,
+                      child: Center(child: CircularProgressIndicator())),
+                  error: (e, s) => const SizedBox.shrink(),
+                ),
+          const SizedBox(height: 24),
           propertiesAsync.when(
+            skipLoadingOnReload: true,
             data: (properties) {
               if (properties.isEmpty) {
                 return Center(
@@ -221,6 +241,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                         : 'Recommended for you',
                     properties: properties,
                     delay: 200.ms,
+                    heroTagPrefix: _isSearchActive ? 'search_' : 'recommended_',
                   ),
                   const SizedBox(height: 40),
                   if (!_isSearchActive) ...[
@@ -271,6 +292,55 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                       ),
                     ),
                   ],
+                  const SizedBox(height: 40),
+                  
+                  if (!_isSearchActive) ...[
+                    const SizedBox(height: 40),
+
+                    // Top Rated Section
+                    _buildSection(
+                      context,
+                      title: 'Top Rated Villas',
+                      properties: properties
+                          .where((p) => p.rating >= 4.8)
+                          .take(6)
+                          .toList(),
+                      delay: 800.ms,
+                      heroTagPrefix: 'top_rated_',
+                    ),
+                    const SizedBox(height: 32),
+
+                    // Beachfront Section
+                    _buildSection(
+                      context,
+                      title: 'Beachfront Escapes',
+                      properties: properties
+                          .where((p) =>
+                              p.categoryId == 'beach' ||
+                              p.categoryId == 'tropical')
+                          .take(6)
+                          .toList(),
+                      delay: 900.ms,
+                      heroTagPrefix: 'beach_',
+                    ),
+                    const SizedBox(height: 32),
+
+                    // Mountain Section
+                    _buildSection(
+                      context,
+                      title: 'Mountain Retreats',
+                      properties: properties
+                          .where((p) =>
+                              p.categoryId == 'mountain' ||
+                              p.categoryId == 'camping')
+                          .take(6)
+                          .toList(),
+                      delay: 1000.ms,
+                      heroTagPrefix: 'mountain_',
+                    ),
+
+                    const SizedBox(height: 80), // Extra space at bottom
+                  ],
                 ],
               );
             },
@@ -296,14 +366,19 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
     )
         .animate()
         .fadeIn(delay: (600 + (index * 100)).ms)
-        .slideX(begin: 0.2, end: 0, curve: Curves.easeOut);
+        .slideY(
+          begin: 0.2,
+          end: 0,
+          curve: Curves.easeOutBack,
+        );
   }
 
   Widget _buildSection(
     BuildContext context, {
     required String title,
     required List<Property> properties,
-    Duration delay = Duration.zero,
+    required Duration delay,
+    required String heroTagPrefix,
   }) {
     if (properties.isEmpty) return const SizedBox.shrink();
 
@@ -317,58 +392,44 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
             style: const TextStyle(
                 fontSize: 20, fontWeight: FontWeight.w700, letterSpacing: -0.5),
           ),
-        ).animate().fadeIn(delay: delay).slideY(begin: 0.2, end: 0),
+        ).animate().fadeIn(delay: delay).slideX(
+              begin: -0.1,
+              end: 0,
+              curve: Curves.easeOutBack,
+            ),
         const SizedBox(height: 16),
-        _isSearchActive
-            ? GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: 240,
-                  childAspectRatio: 0.55,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                ),
-                itemCount: properties.length,
-                itemBuilder: (context, index) {
-                  final property = properties[index];
-                  return VillaCompactCard(
-                    property: property,
-                    onTap: () {
-                      context.push('/property/${property.id}', extra: property);
+        SizedBox(
+          height: 320, // Adjusted height for compact card
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            scrollDirection: Axis.horizontal,
+            itemCount: properties.length,
+            separatorBuilder: (context, index) => const SizedBox(width: 16),
+            itemBuilder: (context, index) {
+              final property = properties[index];
+              return VillaCompactCard(
+                property: property,
+                heroTagPrefix: heroTagPrefix,
+                onTap: () {
+                  context.push(
+                    '/property/${property.id}',
+                    extra: {
+                      'property': property,
+                      'heroTagPrefix': heroTagPrefix,
                     },
-                  )
-                      .animate()
-                      .fadeIn(delay: delay + (50 * index).ms)
-                      .slideY(begin: 0.1, end: 0, curve: Curves.easeOutCubic);
+                  );
                 },
               )
-            : SizedBox(
-                height: 340,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: properties.length,
-                  itemBuilder: (context, index) {
-                    final property = properties[index];
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 16.0),
-                      child: VillaCompactCard(
-                        property: property,
-                        onTap: () {
-                          context.push('/property/${property.id}',
-                              extra: property);
-                        },
-                      ),
-                    )
-                        .animate()
-                        .fadeIn(delay: delay + (100 * index).ms)
-                        .slideX(begin: 0.2, end: 0, curve: Curves.easeOutCubic);
-                  },
-                ),
-              ),
+                  .animate()
+                  .fadeIn(delay: (delay + (50 * index).ms))
+                  .slideX(
+                    begin: 0.2, // Slightly more movement
+                    end: 0,
+                    curve: Curves.easeOutBack,
+                  );
+            },
+          ),
+        ),
       ],
     );
   }

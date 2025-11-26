@@ -21,6 +21,8 @@ import 'package:villavibe/features/home/presentation/widgets/top_search_bar.dart
 import 'package:villavibe/features/properties/data/repositories/property_repository.dart';
 import 'package:villavibe/features/properties/domain/models/property.dart';
 import 'package:villavibe/features/properties/presentation/widgets/villa_compact_card.dart';
+import 'package:villavibe/features/messages/presentation/screens/chat_list_screen.dart';
+
 
 class GuestHomeScreen extends ConsumerStatefulWidget {
   final int initialIndex;
@@ -98,7 +100,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                   'Once you login, you\'ll find messages from hosts here.',
             );
           }
-          return const Center(child: Text('Messages (Logged In)'));
+          return const ChatListScreen();
         case 4:
           if (user == null) {
             return const ProfileLoginView();

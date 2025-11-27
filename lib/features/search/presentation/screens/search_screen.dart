@@ -337,46 +337,78 @@ class SearchScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 24),
                         Expanded(
-                          child: content
-                              .animate()
-                              .fadeIn(duration: 300.ms, delay: 150.ms)
-                              .slideY(begin: 0.05, end: 0, curve: Curves.easeOut),
+                          child: heroTag != null
+                              ? content
+                              : content
+                                  .animate()
+                                  .fadeIn(duration: 300.ms, delay: 150.ms)
+                                  .slideY(begin: 0.05, end: 0, curve: Curves.easeOut),
                         ),
                       ],
                     ),
                   ),
                 )
-              : GestureDetector(
-                  key: const ValueKey('collapsed'),
-                  onTap: onTap,
-                  child: Container(
-                    color: Colors.transparent, // Ensure hit test works
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          title,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.grey[500],
+              : (heroTag != null
+                      ? GestureDetector(
+                          key: const ValueKey('collapsed'),
+                          onTap: onTap,
+                          child: Container(
+                            color: Colors.transparent, // Ensure hit test works
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  title,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.grey[500],
+                                  ),
+                                ),
+                                Text(
+                                  value,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        Text(
-                          value,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black87,
+                        )
+                      : GestureDetector(
+                          key: const ValueKey('collapsed'),
+                          onTap: onTap,
+                          child: Container(
+                            color: Colors.transparent, // Ensure hit test works
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  title,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.grey[500],
+                                  ),
+                                ),
+                                Text(
+                                  value,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-                  .animate()
-                  .fadeIn(duration: 200.ms),
+                        )
+                          .animate()
+                          .fadeIn(duration: 200.ms)),
         ),
       ),
     );

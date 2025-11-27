@@ -6,6 +6,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:villavibe/features/properties/data/repositories/property_repository.dart';
 import 'package:villavibe/features/properties/presentation/widgets/villa_compact_card.dart';
 import 'package:villavibe/features/search/presentation/widgets/map_price_marker.dart';
+import 'package:villavibe/features/search/presentation/providers/search_provider.dart';
 
 class SearchResultsScreen extends ConsumerStatefulWidget {
   const SearchResultsScreen({super.key});

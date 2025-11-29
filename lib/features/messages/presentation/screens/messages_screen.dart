@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/message_repository.dart';
 import '../widgets/message_thread_tile.dart';
 
-class ChatListScreen extends ConsumerWidget {
-  const ChatListScreen({super.key});
+class MessagesScreen extends ConsumerWidget {
+  const MessagesScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -13,10 +13,8 @@ class ChatListScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text(
-          "Messages",
-          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-        ),
+        title: const Text("Messages",
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
         elevation: 0,
         backgroundColor: Colors.white,
       ),

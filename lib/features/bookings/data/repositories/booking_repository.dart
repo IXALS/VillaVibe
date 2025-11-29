@@ -21,6 +21,7 @@ class BookingRepository {
       totalPrice: booking.totalPrice,
       status: booking.status,
       messageToHost: booking.messageToHost,
+      guestCount: booking.guestCount,
       createdAt: DateTime.now(),
     );
     await docRef.set(newBooking.toMap());
@@ -30,6 +31,12 @@ class BookingRepository {
   Future<void> updateBookingStatus(String bookingId, String status) async {
     await _firestore.collection('bookings').doc(bookingId).update({
       'status': status,
+    });
+  }
+
+  Future<void> updateCheckInStatus(String bookingId, bool isCheckedIn) async {
+    await _firestore.collection('bookings').doc(bookingId).update({
+      'isCheckedIn': isCheckedIn,
     });
   }
 

@@ -68,6 +68,7 @@ class Property {
   final String dateRangeText;
 
   final String categoryId;
+  final GeoPoint location;
 
   Property({
     required this.id,
@@ -96,6 +97,7 @@ class Property {
     this.safetyItems = const [],
     this.priceTotal = 0,
     this.dateRangeText = '',
+    this.location = const GeoPoint(-8.409518, 115.188919), // Default to Bali
   });
 
   factory Property.fromFirestore(DocumentSnapshot doc) {
@@ -130,6 +132,8 @@ class Property {
       safetyItems: List<String>.from(data['safetyItems'] ?? []),
       priceTotal: data['priceTotal'] ?? 0,
       dateRangeText: data['dateRangeText'] ?? '',
+      location: data['location'] as GeoPoint? ??
+          const GeoPoint(-8.409518, 115.188919),
     );
   }
 
@@ -160,6 +164,7 @@ class Property {
       'safetyItems': safetyItems,
       'priceTotal': priceTotal,
       'dateRangeText': dateRangeText,
+      'location': location,
     };
   }
 }

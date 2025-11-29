@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:villavibe/features/guest/domain/models/category.dart';
 import 'package:villavibe/features/properties/domain/models/property.dart';
 
@@ -31,6 +32,7 @@ final List<Property> mockProperties = [
     hostYearsHosting: 2,
     reviewsCount: 149,
     specs: PropertySpecs(maxGuests: 2, bedrooms: 1, bathrooms: 1),
+    location: const GeoPoint(-6.1954, 106.8231), // Menteng
   ),
   Property(
     id: '2',
@@ -52,6 +54,7 @@ final List<Property> mockProperties = [
     hostYearsHosting: 4,
     reviewsCount: 85,
     specs: PropertySpecs(maxGuests: 2, bedrooms: 1, bathrooms: 1),
+    location: const GeoPoint(-6.2253, 106.8103), // SCBD
   ),
   Property(
     id: '3',
@@ -73,6 +76,7 @@ final List<Property> mockProperties = [
     hostYearsHosting: 5,
     reviewsCount: 120,
     specs: PropertySpecs(maxGuests: 4, bedrooms: 2, bathrooms: 2),
+    location: const GeoPoint(-7.2575, 112.7521), // Surabaya
   ),
   Property(
     id: '4',
@@ -94,6 +98,7 @@ final List<Property> mockProperties = [
     hostYearsHosting: 1,
     reviewsCount: 30,
     specs: PropertySpecs(maxGuests: 2, bedrooms: 1, bathrooms: 1),
+    location: const GeoPoint(-6.8804, 107.6105), // Dago
   ),
   Property(
     id: '5',
@@ -115,6 +120,7 @@ final List<Property> mockProperties = [
     hostYearsHosting: 8,
     reviewsCount: 45,
     specs: PropertySpecs(maxGuests: 6, bedrooms: 3, bathrooms: 3),
+    location: const GeoPoint(3.5952, 98.6722), // Medan
   ),
 
   // --- BEACH ---
@@ -138,6 +144,7 @@ final List<Property> mockProperties = [
     hostYearsHosting: 10,
     reviewsCount: 320,
     specs: PropertySpecs(maxGuests: 6, bedrooms: 3, bathrooms: 3),
+    location: const GeoPoint(-8.6895, 115.1686), // Seminyak
   ),
   Property(
     id: '7',
@@ -159,6 +166,7 @@ final List<Property> mockProperties = [
     hostYearsHosting: 3,
     reviewsCount: 75,
     specs: PropertySpecs(maxGuests: 2, bedrooms: 1, bathrooms: 1),
+    location: const GeoPoint(-8.8955, 116.2952), // Kuta Lombok
   ),
   Property(
     id: '8',
@@ -180,6 +188,7 @@ final List<Property> mockProperties = [
     hostYearsHosting: 6,
     reviewsCount: 150,
     specs: PropertySpecs(maxGuests: 4, bedrooms: 2, bathrooms: 2),
+    location: const GeoPoint(-8.8151, 115.0884), // Uluwatu
   ),
   Property(
     id: '9',
@@ -201,6 +210,7 @@ final List<Property> mockProperties = [
     hostYearsHosting: 2,
     reviewsCount: 40,
     specs: PropertySpecs(maxGuests: 4, bedrooms: 2, bathrooms: 2),
+    location: const GeoPoint(-8.6478, 115.1385), // Canggu
   ),
   Property(
     id: '10',
@@ -222,6 +232,7 @@ final List<Property> mockProperties = [
     hostYearsHosting: 15,
     reviewsCount: 500,
     specs: PropertySpecs(maxGuests: 2, bedrooms: 1, bathrooms: 1),
+    location: const GeoPoint(-5.8480, 110.4350), // Karimunjawa
   ),
 
   // --- MOUNTAIN ---
@@ -245,6 +256,7 @@ final List<Property> mockProperties = [
     hostYearsHosting: 5,
     reviewsCount: 90,
     specs: PropertySpecs(maxGuests: 4, bedrooms: 2, bathrooms: 1),
+    location: const GeoPoint(-7.8712, 112.5265), // Batu
   ),
   Property(
     id: '12',
@@ -266,6 +278,7 @@ final List<Property> mockProperties = [
     hostYearsHosting: 8,
     reviewsCount: 200,
     specs: PropertySpecs(maxGuests: 3, bedrooms: 1, bathrooms: 1),
+    location: const GeoPoint(-7.9425, 112.9530), // Bromo
   ),
   Property(
     id: '13',
@@ -287,6 +300,7 @@ final List<Property> mockProperties = [
     hostYearsHosting: 4,
     reviewsCount: 60,
     specs: PropertySpecs(maxGuests: 8, bedrooms: 4, bathrooms: 3),
+    location: const GeoPoint(-6.7022, 106.9924), // Puncak
   ),
   Property(
     id: '14',
@@ -308,6 +322,7 @@ final List<Property> mockProperties = [
     hostYearsHosting: 10,
     reviewsCount: 110,
     specs: PropertySpecs(maxGuests: 4, bedrooms: 2, bathrooms: 1),
+    location: const GeoPoint(-7.5975, 110.4234), // Kaliurang
   ),
   Property(
     id: '15',
@@ -329,6 +344,7 @@ final List<Property> mockProperties = [
     hostYearsHosting: 2,
     reviewsCount: 40,
     specs: PropertySpecs(maxGuests: 4, bedrooms: 2, bathrooms: 2),
+    location: const GeoPoint(-7.2050, 109.9142), // Dieng
   ),
 
   // --- CAMPING ---
@@ -352,6 +368,7 @@ final List<Property> mockProperties = [
     hostYearsHosting: 3,
     reviewsCount: 150,
     specs: PropertySpecs(maxGuests: 4, bedrooms: 1, bathrooms: 1),
+    location: const GeoPoint(-7.1338, 107.4035), // Ciwidey
   ),
   Property(
     id: '17',
@@ -373,6 +390,7 @@ final List<Property> mockProperties = [
     hostYearsHosting: 5,
     reviewsCount: 80,
     specs: PropertySpecs(maxGuests: 2, bedrooms: 1, bathrooms: 0),
+    location: const GeoPoint(-6.5875, 106.8756), // Sentul
   ),
   Property(
     id: '18',
@@ -394,6 +412,7 @@ final List<Property> mockProperties = [
     hostYearsHosting: 2,
     reviewsCount: 30,
     specs: PropertySpecs(maxGuests: 2, bedrooms: 1, bathrooms: 0),
+    location: const GeoPoint(-8.2325, 110.9972), // Pacitan
   ),
   Property(
     id: '19',
@@ -415,6 +434,7 @@ final List<Property> mockProperties = [
     hostYearsHosting: 4,
     reviewsCount: 110,
     specs: PropertySpecs(maxGuests: 2, bedrooms: 1, bathrooms: 1),
+    location: const GeoPoint(-8.2415, 115.3633), // Kintamani
   ),
   Property(
     id: '20',
@@ -436,6 +456,7 @@ final List<Property> mockProperties = [
     hostYearsHosting: 6,
     reviewsCount: 200,
     specs: PropertySpecs(maxGuests: 4, bedrooms: 1, bathrooms: 0),
+    location: const GeoPoint(-7.7956, 110.3695), // Jogja
   ),
 
   // --- TROPICAL ---
@@ -459,6 +480,7 @@ final List<Property> mockProperties = [
     hostYearsHosting: 8,
     reviewsCount: 400,
     specs: PropertySpecs(maxGuests: 2, bedrooms: 1, bathrooms: 1),
+    location: const GeoPoint(-8.5069, 115.2625), // Ubud
   ),
   Property(
     id: '22',
@@ -480,6 +502,7 @@ final List<Property> mockProperties = [
     hostYearsHosting: 5,
     reviewsCount: 120,
     specs: PropertySpecs(maxGuests: 6, bedrooms: 3, bathrooms: 3),
+    location: const GeoPoint(-8.6478, 115.1385), // Canggu (Same as other Canggu)
   ),
   Property(
     id: '23',
@@ -501,6 +524,7 @@ final List<Property> mockProperties = [
     hostYearsHosting: 3,
     reviewsCount: 50,
     specs: PropertySpecs(maxGuests: 2, bedrooms: 1, bathrooms: 1),
+    location: const GeoPoint(-8.2192, 114.3691), // Banyuwangi
   ),
   Property(
     id: '24',
@@ -522,6 +546,7 @@ final List<Property> mockProperties = [
     hostYearsHosting: 12,
     reviewsCount: 250,
     specs: PropertySpecs(maxGuests: 2, bedrooms: 1, bathrooms: 1),
+    location: const GeoPoint(-0.2333, 130.5170), // Raja Ampat
   ),
   Property(
     id: '25',
@@ -543,5 +568,6 @@ final List<Property> mockProperties = [
     hostYearsHosting: 7,
     reviewsCount: 180,
     specs: PropertySpecs(maxGuests: 4, bedrooms: 2, bathrooms: 2),
+    location: const GeoPoint(-8.5411, 115.1232), // Tabanan
   ),
 ];

@@ -33,6 +33,12 @@ class BookingRepository {
     });
   }
 
+  Future<void> updateCheckInStatus(String bookingId, bool isCheckedIn) async {
+    await _firestore.collection('bookings').doc(bookingId).update({
+      'isCheckedIn': isCheckedIn,
+    });
+  }
+
   Future<Booking?> getBooking(String bookingId) async {
     final doc = await _firestore.collection('bookings').doc(bookingId).get();
     if (doc.exists) {

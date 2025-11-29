@@ -1,4 +1,7 @@
 import 'dart:ui';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,12 +9,52 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:syncfusion_flutter_datepicker/datepicker.dart';
 import 'package:villavibe/features/search/presentation/providers/search_provider.dart';
+import 'package:villavibe/features/search/presentation/widgets/dates_tab_view.dart';
+import 'package:villavibe/features/search/presentation/widgets/flexible_tab_view.dart';
+import 'package:villavibe/features/search/presentation/widgets/months_tab_view.dart';
 
-class SearchScreen extends ConsumerWidget {
-  const SearchScreen({super.key});
+class SearchScreen extends ConsumerStatefulWidget {
+  final bool? isEditing;
+
+  const SearchScreen({
+    super.key,
+    this.isEditing,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SearchScreen> createState() => _SearchScreenState();
+}
+
+class _SearchScreenState extends ConsumerState<SearchScreen> {
+  late TextEditingController _locationController;
+  bool _areInteractionsEnabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _locationController = TextEditingController(
+      text: ref.read(searchNotifierProvider).location ?? '',
+    );
+
+    // Frame Deferral: Wait for the transition animation to complete before rendering heavy widgets.
+    // The transition duration is 400ms (defined in app_router.dart), so we wait 450ms to be safe.
+    Future.delayed(const Duration(milliseconds: 450), () {
+      if (mounted) {
+        setState(() {
+          _areInteractionsEnabled = true;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _locationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final searchState = ref.watch(searchNotifierProvider);
     final notifier = ref.read(searchNotifierProvider.notifier);
 
@@ -85,16 +128,28 @@ class SearchScreen extends ConsumerWidget {
                   // Calculate available height for the active section
                   final inactiveHeight = 84.0;
                   final spacing = 12.0;
-                  final calculatedHeight = constraints.maxHeight - (2 * inactiveHeight) - (2 * spacing) - 32;
+                  
+                  // If 'When' is active, it takes up all space below 'Where' (collapsed)
+                  // 'Who' is pushed off screen or hidden
+                  final isWhenActive = searchState.currentStep == SearchStep.when;
+                  
+                  // Use almost all available space (minus small padding) to maximize the view area.
+                  // This increases the chance of cutting off an item mid-way on various screen sizes.
+                  final calculatedHeight = constraints.maxHeight - (2 * inactiveHeight) - (2 * spacing) - 10;
                   final expandedHeight = calculatedHeight > 0 ? calculatedHeight - 1 : 0.0;
+                  
+                  // Special height calculation for full-screen 'When'
+                  final whenExpandedHeight = constraints.maxHeight - inactiveHeight - spacing - 32;
 
                   // Positions
                   double top1 = 0;
                   double h1 = searchState.currentStep == SearchStep.where ? expandedHeight : inactiveHeight;
                   
                   double top2 = h1 + spacing;
-                  double h2 = searchState.currentStep == SearchStep.when ? expandedHeight : inactiveHeight;
+                  // If When is active, use the larger height. Otherwise, it's inactive.
+                  double h2 = isWhenActive ? whenExpandedHeight : inactiveHeight;
                   
+                  // If When is active, Who is pushed down (potentially off screen)
                   double top3 = top2 + h2 + spacing;
                   double h3 = searchState.currentStep == SearchStep.who ? expandedHeight : inactiveHeight;
 
@@ -148,13 +203,11 @@ class SearchScreen extends ConsumerWidget {
                             child: _buildSection(
                               context,
                               title: 'When',
-                              value: searchState.startDate != null
-                                  ? '${searchState.startDate.toString().split(' ')[0]} - ${searchState.endDate.toString().split(' ')[0]}'
-                                  : 'Add dates',
+                              value: _formatDateRange(searchState),
                               isActive: searchState.currentStep == SearchStep.when,
                               onTap: () => notifier.setStep(SearchStep.when),
                               content: _buildWhenContent(ref),
-                              expandedHeight: expandedHeight,
+                              expandedHeight: whenExpandedHeight,
                             ),
                           ),
                         ),
@@ -214,13 +267,27 @@ class SearchScreen extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        // TODO: Navigate to results
-                        context.push('/search/results');
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          if (searchState.currentStep == SearchStep.who) {
+                            if (widget.isEditing == true) {
+                              context.pop();
+                            } else {
+                              context.pushReplacement('/search/results');
+                            }
+                          } else {
+                          // Move to next step
+                          if (searchState.currentStep == SearchStep.where) {
+                            notifier.setStep(SearchStep.when);
+                          } else if (searchState.currentStep == SearchStep.when) {
+                            notifier.setStep(SearchStep.who);
+                          }
+                        }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFE31C5F),
+                        backgroundColor: searchState.currentStep == SearchStep.who
+                            ? const Color(0xFFE31C5F)
+                            : Colors.black,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(
                             horizontal: 24, vertical: 12),
@@ -228,10 +295,12 @@ class SearchScreen extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      icon: const Icon(LucideIcons.search, size: 18),
-                      label: const Text(
-                        'Search',
-                        style: TextStyle(
+                      icon: searchState.currentStep == SearchStep.who
+                          ? const Icon(LucideIcons.search, size: 18)
+                          : const SizedBox.shrink(),
+                      label: Text(
+                        searchState.currentStep == SearchStep.who ? 'Search' : 'Next',
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
@@ -425,8 +494,10 @@ class SearchScreen extends ConsumerWidget {
 
   Widget _buildWhereContent(WidgetRef ref) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TextField(
+          controller: _locationController,
           decoration: InputDecoration(
             hintText: 'Search destinations',
             prefixIcon: const Icon(LucideIcons.search),
@@ -439,116 +510,258 @@ class SearchScreen extends ConsumerWidget {
             contentPadding: const EdgeInsets.symmetric(vertical: 16),
           ),
           onChanged: (value) {
-             ref.read(searchNotifierProvider.notifier).setLocation(value);
+            ref.read(searchNotifierProvider.notifier).setLocation(value);
           },
         ),
-        const SizedBox(height: 16),
-        Expanded(
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                _buildSuggestionItem(Icons.near_me_outlined, 'Nearby'),
-                _buildSuggestionItem(Icons.map_outlined, 'Yogyakarta, Indonesia'),
-                _buildSuggestionItem(Icons.map_outlined, 'Bali, Indonesia'),
-              ],
-            ),
+        const SizedBox(height: 24),
+      const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 4),
+        child: Text(
+          'Suggested destinations',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
           ),
         ),
-      ],
-    );
-  }
-
-  Widget _buildSuggestionItem(IconData icon, String text) {
-    return ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Colors.grey[100],
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(icon, size: 20, color: Colors.black87),
       ),
-      title: Text(text),
-      onTap: () {
-        // TODO: Select location
-      },
-    );
-  }
+      const SizedBox(height: 16),
+      Expanded(
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              _buildSuggestionItem(
+                Icons.near_me_outlined,
+                'Nearby',
+                'Find what\'s around you',
+                Colors.blue,
+                onTap: () async {
+                  LocationPermission permission = await Geolocator.checkPermission();
+                  if (permission == LocationPermission.denied) {
+                    permission = await Geolocator.requestPermission();
+                    if (permission == LocationPermission.denied) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Location permission denied')),
+                        );
+                      }
+                      return;
+                    }
+                  }
+                  
+                  if (permission == LocationPermission.deniedForever) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Location permission permanently denied')),
+                      );
+                    }
+                    return;
+                  } 
+
+                  final position = await Geolocator.getCurrentPosition();
+                  
+                  if (context.mounted) {
+                    _locationController.text = 'Current Location';
+                    ref.read(searchNotifierProvider.notifier).setNearbySearch(
+                      GeoPoint(position.latitude, position.longitude)
+                    );
+                    ref.read(searchNotifierProvider.notifier).setStep(SearchStep.when);
+                  }
+                },
+              ),
+              _buildSuggestionItem(
+                Icons.map_outlined,
+                'Ubud, Bali',
+                'Popular with travelers near you',
+                Colors.teal,
+              ),
+              _buildSuggestionItem(
+                Icons.location_city,
+                'Yogyakarta, Yogyakarta',
+                'For sights like Borobudur Temple',
+                Colors.orange,
+              ),
+              _buildSuggestionItem(
+                Icons.landscape_outlined,
+                'Malang, East Java',
+                'For nature-lovers',
+                Colors.pink,
+              ),
+              _buildSuggestionItem(
+                Icons.beach_access_outlined,
+                'Lombok, West Nusa Tenggara',
+                'Beautiful beaches and islands',
+                Colors.cyan,
+              ),
+              _buildSuggestionItem(
+                Icons.temple_buddhist_outlined,
+                'Borobudur, Central Java',
+                'Historic temple sites',
+                Colors.purple,
+              ),
+              const SizedBox(height: 24), // Add padding at bottom to show scrollability
+            ],
+          ),
+        ),
+      ),
+    ],
+  );
+}
+
+  Widget _buildSuggestionItem(
+    IconData icon, String title, String description, Color iconColor, {VoidCallback? onTap}) {
+  return ListTile(
+    contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+    leading: Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: iconColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(icon, size: 24, color: iconColor),
+    ),
+    title: Text(
+      title,
+      style: const TextStyle(
+        fontWeight: FontWeight.w600,
+        fontSize: 16,
+        color: Colors.black87,
+      ),
+    ),
+    subtitle: Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Text(
+        description,
+        style: TextStyle(
+          fontSize: 14,
+          color: Colors.grey[600],
+        ),
+      ),
+    ),
+    onTap: onTap ?? () {
+      _locationController.text = title.split(',')[0]; // Use first part of title
+      ref.read(searchNotifierProvider.notifier).setLocation(title.split(',')[0]);
+      ref.read(searchNotifierProvider.notifier).setStep(SearchStep.when);
+    },
+  );
+}
+
+  int _selectedDateTab = 0;
 
   Widget _buildWhenContent(WidgetRef ref) {
     return Column(
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                padding: const EdgeInsets.all(4),
-                child: Row(
-                  children: [
-                    _buildTabItem('Dates', true),
-                    _buildTabItem('Months', false),
-                    _buildTabItem('Flexible', false),
-                  ],
-                ),
-              ),
-            ),
-          ],
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Colors.grey[100],
+            borderRadius: BorderRadius.circular(32),
+          ),
+          padding: const EdgeInsets.all(4),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return Row(
+                children: [
+                  _buildTabItem('Dates', 0),
+                  _buildTabItem('Months', 1),
+                  _buildTabItem('Flexible', 2),
+                ],
+              );
+            },
+          ),
         ),
         const SizedBox(height: 24),
         Expanded(
-          child: SfDateRangePicker(
-            selectionMode: DateRangePickerSelectionMode.range,
-            headerStyle: const DateRangePickerHeaderStyle(
-              textStyle: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
-            monthViewSettings: const DateRangePickerMonthViewSettings(
-              firstDayOfWeek: 1,
-            ),
-            onSelectionChanged: (args) {
-              if (args.value is PickerDateRange) {
-                ref.read(searchNotifierProvider.notifier).setDates(
-                      args.value.startDate,
-                      args.value.endDate,
-                    );
-              }
-            },
-          ),
+          child: !_areInteractionsEnabled
+              ? const Center(child: CircularProgressIndicator())
+              : AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  child: KeyedSubtree(
+                    key: ValueKey(_selectedDateTab),
+                    child: _buildTabContent(ref),
+                  ),
+                ),
         ),
       ],
     );
   }
 
-  Widget _buildTabItem(String text, bool isSelected) {
+  Widget _buildTabContent(WidgetRef ref) {
+    final searchState = ref.watch(searchNotifierProvider);
+    switch (_selectedDateTab) {
+      case 0:
+        return DatesTabView(
+          initialStartDate: searchState.specificStartDate,
+          initialEndDate: searchState.specificEndDate,
+          onDatesChanged: (start, end) {
+            if (start != null) {
+              ref.read(searchNotifierProvider.notifier).setSpecificDates(start, end);
+            }
+          },
+        );
+      case 1:
+        return MonthsTabView(
+          startDate: searchState.monthsStartDate,
+          onRangeChanged: (start, months) {
+            ref.read(searchNotifierProvider.notifier).setMonthsConfig(start, months);
+          },
+          onDateTap: () {
+            setState(() {
+              _selectedDateTab = 0;
+            });
+            ref.read(searchNotifierProvider.notifier).setActiveDateTab(SearchDateTab.dates);
+          },
+        );
+      case 2:
+        return FlexibleTabView(
+          onSelectionChanged: (duration, months) {
+            ref.read(searchNotifierProvider.notifier).setFlexibleConfig(duration, months);
+          },
+        );
+      default:
+        return const SizedBox();
+    }
+  }
+
+  Widget _buildTabItem(String text, int index) {
+    final isSelected = _selectedDateTab == index;
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : [],
-        ),
-        child: Text(
-          text,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 13,
-            color: isSelected ? Colors.black : Colors.grey[600],
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _selectedDateTab = index;
+          });
+          final tab = index == 0 
+              ? SearchDateTab.dates 
+              : index == 1 
+                  ? SearchDateTab.months 
+                  : SearchDateTab.flexible;
+          ref.read(searchNotifierProvider.notifier).setActiveDateTab(tab);
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.12),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : [],
+          ),
+          child: Text(
+            text,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+              color: isSelected ? Colors.black : Colors.grey[600],
+            ),
           ),
         ),
       ),
@@ -663,5 +876,14 @@ class SearchScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+  String _formatDateRange(SearchState state) {
+    if (state.startDate == null) return 'I\'m flexible';
+    
+    final start = DateFormat('d MMM').format(state.startDate!);
+    if (state.endDate == null) return start;
+    
+    final end = DateFormat('d MMM').format(state.endDate!);
+    return '$start - $end';
   }
 }

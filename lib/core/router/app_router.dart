@@ -188,9 +188,12 @@ GoRouter router(RouterRef ref) {
       GoRoute(
         path: '/search',
         pageBuilder: (context, state) {
+          final extra = state.extra is Map<String, dynamic> ? state.extra as Map<String, dynamic> : null;
+          final isEditing = extra?['isEditing'] == true;
+          
           return CustomTransitionPage(
             key: state.pageKey,
-            child: const SearchScreen(),
+            child: SearchScreen(isEditing: isEditing),
             opaque: false,
             barrierColor: Colors.black.withOpacity(0.2),
             transitionDuration: const Duration(milliseconds: 400),

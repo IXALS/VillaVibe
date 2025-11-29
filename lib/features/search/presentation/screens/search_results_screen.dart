@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:villavibe/features/properties/data/repositories/property_repository.dart';
+import 'package:villavibe/features/properties/domain/models/property.dart';
 import 'package:villavibe/features/properties/presentation/widgets/villa_compact_card.dart';
 import 'package:villavibe/features/search/presentation/widgets/map_price_marker.dart';
 import 'package:villavibe/features/search/presentation/providers/search_provider.dart';
@@ -31,8 +34,13 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
 
     for (var property in properties) {
       final isSelected = property.id == _selectedPropertyId;
+      final currencyFormat = NumberFormat.currency(
+        locale: 'id_ID',
+        symbol: 'Rp ',
+        decimalDigits: 0,
+      );
       final icon = await MapMarkerHelper.createPriceMarker(
-        '\$${property.pricePerNight}',
+        currencyFormat.format(property.pricePerNight),
         isSelected,
       );
 
@@ -58,7 +66,102 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
       setState(() {
         _markers = markers;
       });
+      
+      // Update camera position to fit markers
+      final searchState = ref.read(searchNotifierProvider);
+      _updateCameraPosition(properties.cast<Property>(), searchState);
     }
+  }
+
+  void _updateCameraPosition(List<Property> properties, SearchState searchState) {
+    if (_mapController == null) return;
+
+    if (searchState.isSearchingNearby && searchState.userLocation != null) {
+      _mapController!.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            target: LatLng(
+              searchState.userLocation!.latitude,
+              searchState.userLocation!.longitude,
+            ),
+            zoom: 15,
+          ),
+        ),
+      );
+    } else if (properties.isNotEmpty) {
+      if (properties.length == 1) {
+        // If only one result, zoom to it with a comfortable level
+        _mapController!.animateCamera(
+          CameraUpdate.newCameraPosition(
+            CameraPosition(
+              target: LatLng(
+                properties.first.location.latitude,
+                properties.first.location.longitude,
+              ),
+              zoom: 15,
+            ),
+          ),
+        );
+      } else {
+        double minLat = properties.first.location.latitude;
+        double maxLat = properties.first.location.latitude;
+        double minLng = properties.first.location.longitude;
+        double maxLng = properties.first.location.longitude;
+
+        for (var property in properties) {
+          if (property.location.latitude < minLat) minLat = property.location.latitude;
+          if (property.location.latitude > maxLat) maxLat = property.location.latitude;
+          if (property.location.longitude < minLng) minLng = property.location.longitude;
+          if (property.location.longitude > maxLng) maxLng = property.location.longitude;
+        }
+
+        _mapController!.animateCamera(
+          CameraUpdate.newLatLngBounds(
+            LatLngBounds(
+              southwest: LatLng(minLat, minLng),
+              northeast: LatLng(maxLat, maxLng),
+            ),
+            100, // padding
+          ),
+        );
+      }
+    }
+  }
+
+
+
+  String _buildSearchLabel(SearchState state) {
+    final List<String> parts = [];
+
+    // Location
+    if (state.location != null && state.location!.isNotEmpty) {
+      parts.add(state.location!);
+    } else {
+      parts.add('Anywhere');
+    }
+
+    // Dates
+    // Dates
+    if (state.startDate != null) {
+      final start = DateFormat('d MMM').format(state.startDate!);
+      if (state.endDate != null) {
+        final end = DateFormat('d MMM').format(state.endDate!);
+        parts.add('$start - $end');
+      } else {
+        parts.add(start);
+      }
+    } else {
+      parts.add('Any week');
+    }
+
+    // Guests
+    if (state.totalGuests > 0) {
+      parts.add('${state.totalGuests} guests');
+    } else {
+      parts.add('Add guests');
+    }
+
+    return parts.join(' · ');
   }
 
   @override
@@ -74,21 +177,34 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
             data: (properties) {
               // Filter properties based on search location
               final filteredProperties = properties.where((property) {
+                if (searchState.isSearchingNearby && searchState.userLocation != null) {
+                  final distance = Geolocator.distanceBetween(
+                    searchState.userLocation!.latitude,
+                    searchState.userLocation!.longitude,
+                    property.location.latitude,
+                    property.location.longitude,
+                  );
+                  return distance < 50000; // 50km radius
+                }
+
                 if (searchState.location == null || searchState.location!.isEmpty) {
                   return true;
                 }
                 final query = searchState.location!.toLowerCase();
-                return property.city.toLowerCase().contains(query) ||
-                    property.address.toLowerCase().contains(query) ||
-                    property.name.toLowerCase().contains(query);
+                final matchesCity = property.city.toLowerCase().contains(query);
+                final matchesAddress = property.address.toLowerCase().contains(query);
+                final matchesName = property.name.toLowerCase().contains(query);
+                
+                return matchesCity || matchesAddress || matchesName;
               }).toList();
 
-              if (_markers.isEmpty && filteredProperties.isNotEmpty) {
-                _loadMarkers(filteredProperties);
-              } else if (filteredProperties.isEmpty && _markers.isNotEmpty) {
-                 // Clear markers if no results
+              // Check if markers need to be updated
+              final newIds = filteredProperties.map((p) => p.id).toSet();
+              final currentIds = _markers.map((m) => m.markerId.value).toSet();
+              
+              if (newIds.length != currentIds.length || !newIds.containsAll(currentIds)) {
                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (mounted) setState(() => _markers = {});
+                    _loadMarkers(filteredProperties);
                  });
               }
 
@@ -99,6 +215,7 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                 ),
                 onMapCreated: (controller) {
                   _mapController = controller;
+                  _updateCameraPosition(filteredProperties, searchState);
                 },
                 markers: _markers,
                 myLocationEnabled: true,
@@ -136,26 +253,38 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(32),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 8,
+                    child: Hero(
+                      tag: 'search_bar',
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () => context.push('/search', extra: {'isEditing': true}),
+                          borderRadius: BorderRadius.circular(32),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(32),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 8,
+                                ),
+                              ],
+                            ),
+                            child: Text(
+                              _buildSearchLabel(searchState),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                              textAlign: TextAlign.center,
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
                           ),
-                        ],
-                      ),
-                      child: const Text(
-                        'Bali · Any week · Add guests',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
                         ),
-                        textAlign: TextAlign.center,
                       ),
                     ),
                   ),
@@ -197,66 +326,107 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                     ),
                   ],
                 ),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 12),
-                    Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Over 1,000 homes',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Expanded(
-                      child: propertiesAsync.when(
-                        data: (properties) {
-                          final filteredProperties = properties.where((property) {
-                            if (searchState.location == null || searchState.location!.isEmpty) {
-                              return true;
-                            }
-                            final query = searchState.location!.toLowerCase();
-                            return property.city.toLowerCase().contains(query) ||
-                                property.address.toLowerCase().contains(query) ||
-                                property.name.toLowerCase().contains(query);
-                          }).toList();
+                child: CustomScrollView(
+                  controller: scrollController,
+                  slivers: [
+                    propertiesAsync.when(
+                      data: (properties) {
+                        final filteredProperties = properties.where((property) {
+                          if (searchState.location == null ||
+                              searchState.location!.isEmpty) {
+                            return true;
+                          }
+                          final query = searchState.location!.toLowerCase();
+                          return property.city.toLowerCase().contains(query) ||
+                              property.address.toLowerCase().contains(query) ||
+                              property.name.toLowerCase().contains(query);
+                        }).toList();
 
-                          return ListView.separated(
-                            controller: scrollController,
-                            padding: const EdgeInsets.all(24),
-                            itemCount: filteredProperties.length,
-                            separatorBuilder: (context, index) =>
-                                const SizedBox(height: 32),
-                            itemBuilder: (context, index) {
-                              final property = filteredProperties[index];
-                              return VillaCompactCard(
-                                property: property,
-                                heroTagPrefix: 'search_result_',
-                                onTap: () {
-                                  context.push(
-                                    '/property/${property.id}',
-                                    extra: {
-                                      'property': property,
-                                      'heroTagPrefix': 'search_result_',
-                                    },
-                                  );
-                                },
+                        return SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) {
+                              if (index == 0) {
+                                return Column(
+                                  children: [
+                                    const SizedBox(height: 12),
+                                    Container(
+                                      width: 40,
+                                      height: 4,
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[300],
+                                        borderRadius: BorderRadius.circular(2),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      '${filteredProperties.length} ${filteredProperties.length == 1 ? 'home' : 'homes'}',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                  ],
+                                );
+                              }
+
+                              final property = filteredProperties[index - 1];
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                        horizontal: 24)
+                                    .copyWith(bottom: 32),
+                                child: VillaCompactCard(
+                                  property: property,
+                                  heroTagPrefix: 'search_result_',
+                                  onTap: () {
+                                    context.push(
+                                      '/property/${property.id}',
+                                      extra: {
+                                        'property': property,
+                                        'heroTagPrefix': 'search_result_',
+                                      },
+                                    );
+                                  },
+                                ),
                               );
                             },
-                          );
-                        },
-                        loading: () =>
-                            const Center(child: CircularProgressIndicator()),
-                        error: (e, s) => const Center(child: Text('Error')),
+                            childCount: filteredProperties.length + 1,
+                          ),
+                        );
+                      },
+                      loading: () => SliverToBoxAdapter(
+                        child: Column(
+                          children: [
+                            const SizedBox(height: 12),
+                            Container(
+                              width: 40,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[300],
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                            const SizedBox(height: 32),
+                            const CircularProgressIndicator(),
+                          ],
+                        ),
+                      ),
+                      error: (e, s) => SliverToBoxAdapter(
+                        child: Column(
+                          children: [
+                            const SizedBox(height: 12),
+                            Container(
+                              width: 40,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[300],
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                            const SizedBox(height: 32),
+                            Text('Error: $e'),
+                          ],
+                        ),
                       ),
                     ),
                   ],

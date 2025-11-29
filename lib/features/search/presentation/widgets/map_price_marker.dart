@@ -19,6 +19,7 @@ class MapMarkerHelper {
 
     const double padding = 20.0;
     const double fontSize = 30.0;
+    const double shadowMargin = 32.0; // Increased margin for shadow
 
     textPainter.text = TextSpan(
       text: price,
@@ -31,21 +32,24 @@ class MapMarkerHelper {
 
     textPainter.layout();
 
-    final double width = textPainter.width + padding * 2;
-    final double height = textPainter.height + padding * 2;
+    final double contentWidth = textPainter.width + padding * 2;
+    final double contentHeight = textPainter.height + padding * 2;
+    
+    final double totalWidth = contentWidth + shadowMargin * 2;
+    final double totalHeight = contentHeight + shadowMargin * 2;
 
     // Draw shadow
     final Path shadowPath = Path()
       ..addRRect(RRect.fromRectAndRadius(
-        Rect.fromLTWH(2, 2, width, height),
+        Rect.fromLTWH(shadowMargin + 2, shadowMargin + 4, contentWidth, contentHeight),
         const Radius.circular(30),
       ));
-    canvas.drawShadow(shadowPath, Colors.black, 4, true);
+    canvas.drawShadow(shadowPath, Colors.black.withOpacity(0.5), 8, true);
 
     // Draw background pill
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromLTWH(0, 0, width, height),
+        Rect.fromLTWH(shadowMargin, shadowMargin, contentWidth, contentHeight),
         const Radius.circular(30),
       ),
       paint,
@@ -54,12 +58,12 @@ class MapMarkerHelper {
     // Draw text
     textPainter.paint(
       canvas,
-      Offset(padding, padding),
+      Offset(padding + shadowMargin, padding + shadowMargin),
     );
 
     final ui.Image image = await pictureRecorder
         .endRecording()
-        .toImage(width.toInt(), height.toInt());
+        .toImage(totalWidth.toInt(), totalHeight.toInt());
     final ByteData? data =
         await image.toByteData(format: ui.ImageByteFormat.png);
 

@@ -11,7 +11,9 @@ import 'package:villavibe/features/bookings/presentation/widgets/booking_payment
 import 'package:villavibe/features/bookings/presentation/widgets/booking_progress_bar.dart';
 import 'package:villavibe/features/bookings/presentation/widgets/booking_review_content.dart';
 import 'package:villavibe/features/bookings/presentation/widgets/request_to_book_content.dart';
+import 'package:villavibe/features/messages/domain/models/message_thread.dart';
 import 'package:villavibe/features/properties/domain/models/property.dart';
+import 'package:villavibe/features/messages/data/message_repository.dart';
 
 class BookingFlowWrapper extends ConsumerWidget {
   final Property property;
@@ -238,6 +240,26 @@ class BookingFlowWrapper extends ConsumerWidget {
 
       final bookingId =
           await ref.read(bookingRepositoryProvider).createBooking(booking);
+
+      final newThread = MessageThread(
+        id: bookingId,
+        name: property.hostName ?? "Host",
+        lastMessage: bookingState.messageToHost,
+        avatarUrl: "https://i.pravatar.cc/150?u=$bookingId",
+        timestamp: DateTime.now(),
+        unread: false,
+        tripStatus: "Pending approval",
+        subtitle: "${bookingState.checkInDate} - ${bookingState.checkOutDate}",
+      );
+
+      ref.read(messageThreadsProvider.notifier).addThread(newThread);
+
+      // ignore: use_build_context_synchronously
+      context.push('/message-room', extra: {
+        "id": newThread.id,
+        "name": newThread.name,
+        "photo": newThread.avatarUrl,
+      });
 
       if (context.mounted) {
         Navigator.of(context, rootNavigator: true).pop(); // Close overlay

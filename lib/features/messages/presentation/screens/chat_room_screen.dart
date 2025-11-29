@@ -18,12 +18,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   @override
   void initState() {
     super.initState();
-
-    // Dummy initial message
-    _messages.add({
-      'fromMe': false,
-      'text': 'Hello! How can I help you today?',
-    });
+    // No initial message
   }
 
   void sendMessage() {

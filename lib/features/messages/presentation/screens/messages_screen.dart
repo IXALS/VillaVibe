@@ -8,7 +8,7 @@ class MessagesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final threads = ref.watch(dummyThreadsProvider);
+    final threads = ref.watch(messageThreadsProvider);
 
     return Scaffold(
       backgroundColor: Colors.white,

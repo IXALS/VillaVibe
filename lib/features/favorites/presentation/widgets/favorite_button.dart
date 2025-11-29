@@ -4,6 +4,9 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:villavibe/features/auth/data/repositories/auth_repository.dart';
 import 'package:villavibe/features/favorites/data/repositories/favorite_repository.dart';
 import 'package:villavibe/features/auth/presentation/widgets/login_modal.dart';
+import 'package:villavibe/features/favorites/presentation/widgets/create_wishlist_modal.dart';
+import 'package:villavibe/features/favorites/presentation/widgets/change_wishlist_modal.dart';
+import 'package:villavibe/features/favorites/presentation/widgets/wishlist_snackbar.dart';
 
 class FavoriteButton extends ConsumerStatefulWidget {
   final String villaId;
@@ -62,17 +65,85 @@ class _FavoriteButtonState extends ConsumerState<FavoriteButton>
               if (user == null) {
                 showLoginModal(context); // Kalau belum login, suruh login
               } else {
-                // Animate if we are liking it (not unliking)
-                if (!isFavorite) {
-                  await _controller.forward();
-                  await _controller.reverse();
-                }
+                // Debug print to check wishlists state
+                print('User wishlists count: ${user.wishlists.length}');
+                
+                if (user.wishlists.isEmpty) {
+                  print('Showing CreateWishlistModal');
+                  // Case 1: No wishlists -> Show Create Modal
+                  final result = await showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => CreateWishlistModal(
+                      firstVillaId: widget.villaId,
+                    ),
+                  );
+                  
+                  if (result is Map<String, dynamic> && context.mounted) {
+                     showWishlistSnackBar(
+                      context,
+                      wishlistName: result['wishlistName'],
+                      imageUrl: result['imageUrl'],
+                      onChange: () {
+                        if (context.mounted) {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
+                            builder: (context) => ChangeWishlistModal(
+                              villaId: widget.villaId,
+                            ),
+                          );
+                        }
+                      },
+                    );
+                  }
+                  // If successful, repository handles the update and UI reflects it
+                } else {
+                  // Case 2: Has wishlists
+                  if (isFavorite) {
+                    // If already favorite -> Toggle (Remove)
+                    // Animate
+                    await _controller.forward();
+                    await _controller.reverse();
+                    
+                    await ref
+                        .read(favoriteRepositoryProvider)
+                        .toggleFavorite(widget.villaId);
+                  } else {
+                    // If NOT favorite -> Show Change Modal (to choose where to save)
+                    // Do NOT auto-save.
+                    final result = await showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (context) => ChangeWishlistModal(
+                        villaId: widget.villaId,
+                      ),
+                    );
 
-                // Panggil fungsi repository yang kita buat tadi
-                await ref
-                    .read(favoriteRepositoryProvider)
-                    .toggleFavorite(widget.villaId);
-                // Karena kita pakai stream di authState, UI akan update otomatis!
+                    if (result is Map<String, dynamic> && context.mounted) {
+                       showWishlistSnackBar(
+                        context,
+                        wishlistName: result['wishlistName'],
+                        imageUrl: result['imageUrl'],
+                        onChange: () {
+                          if (context.mounted) {
+                            showModalBottomSheet(
+                              context: context,
+                              isScrollControlled: true,
+                              backgroundColor: Colors.transparent,
+                              builder: (context) => ChangeWishlistModal(
+                                villaId: widget.villaId,
+                              ),
+                            );
+                          }
+                        },
+                      );
+                    }
+                  }
+                }
               }
             },
           ),

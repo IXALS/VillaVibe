@@ -7,6 +7,9 @@ import 'package:intl/intl.dart';
 import 'package:villavibe/features/auth/data/repositories/auth_repository.dart';
 import 'package:villavibe/features/auth/presentation/widgets/login_modal.dart';
 import 'package:villavibe/features/favorites/data/repositories/favorite_repository.dart';
+import 'package:villavibe/features/favorites/presentation/widgets/change_wishlist_modal.dart';
+import 'package:villavibe/features/favorites/presentation/widgets/create_wishlist_modal.dart';
+import 'package:villavibe/features/favorites/presentation/widgets/wishlist_snackbar.dart';
 import 'package:villavibe/features/properties/domain/models/property.dart';
 
 class VillaCompactCard extends ConsumerStatefulWidget {
@@ -109,13 +112,75 @@ class _VillaCompactCardState extends ConsumerState<VillaCompactCard>
                     top: 12,
                     right: 12,
                     child: GestureDetector(
-                      onTap: () {
+                      onTap: () async {
                         if (user == null) {
                           showLoginModal(context);
                         } else {
-                          ref
-                              .read(favoriteRepositoryProvider)
-                              .toggleFavorite(widget.property.id);
+                          if (user.wishlists.isEmpty) {
+                            final result = await showModalBottomSheet(
+                              context: context,
+                              isScrollControlled: true,
+                              backgroundColor: Colors.transparent,
+                              builder: (context) => CreateWishlistModal(
+                                firstVillaId: widget.property.id,
+                              ),
+                            );
+
+                            if (result is Map<String, dynamic> && context.mounted) {
+                               showWishlistSnackBar(
+                                context,
+                                wishlistName: result['wishlistName'],
+                                imageUrl: result['imageUrl'],
+                                onChange: () {
+                                  if (context.mounted) {
+                                    showModalBottomSheet(
+                                      context: context,
+                                      isScrollControlled: true,
+                                      backgroundColor: Colors.transparent,
+                                      builder: (context) => ChangeWishlistModal(
+                                        villaId: widget.property.id,
+                                      ),
+                                    );
+                                  }
+                                },
+                              );
+                            }
+                          } else {
+                            if (isFavorite) {
+                              await ref
+                                  .read(favoriteRepositoryProvider)
+                                  .toggleFavorite(widget.property.id);
+                            } else {
+                              final result = await showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                backgroundColor: Colors.transparent,
+                                builder: (context) => ChangeWishlistModal(
+                                  villaId: widget.property.id,
+                                ),
+                              );
+
+                              if (result is Map<String, dynamic> && context.mounted) {
+                                 showWishlistSnackBar(
+                                  context,
+                                  wishlistName: result['wishlistName'],
+                                  imageUrl: result['imageUrl'],
+                                  onChange: () {
+                                    if (context.mounted) {
+                                      showModalBottomSheet(
+                                        context: context,
+                                        isScrollControlled: true,
+                                        backgroundColor: Colors.transparent,
+                                        builder: (context) => ChangeWishlistModal(
+                                          villaId: widget.property.id,
+                                        ),
+                                      );
+                                    }
+                                  },
+                                );
+                              }
+                            }
+                          }
                         }
                       },
                       child: Container(

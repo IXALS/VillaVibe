@@ -112,6 +112,7 @@ class _MyBookingsScreenState extends ConsumerState<MyBookingsScreen> with Single
           unselectedLabelColor: Colors.grey,
           indicatorColor: Colors.black,
           indicatorSize: TabBarIndicatorSize.label,
+          overlayColor: MaterialStateProperty.all(Colors.transparent), // Remove ripple
           labelStyle: GoogleFonts.outfit(fontWeight: FontWeight.w600),
           tabs: const [
             Tab(text: 'Upcoming'),

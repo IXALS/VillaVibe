@@ -233,6 +233,7 @@ class BookingFlowWrapper extends ConsumerWidget {
         totalPrice: bookingState.totalPrice,
         status: Booking.statusPending,
         messageToHost: bookingState.messageToHost,
+        guestCount: bookingState.guestCount,
         createdAt: DateTime.now(),
       );
 

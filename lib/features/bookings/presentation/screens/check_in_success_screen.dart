@@ -17,8 +17,8 @@ class _CheckInSuccessScreenState extends State<CheckInSuccessScreen> {
   @override
   void initState() {
     super.initState();
-    // Auto-close after 2.5 seconds (allowing for entrance animation + hold time)
-    Future.delayed(const Duration(milliseconds: 2500), () {
+    // Auto-close after 3 seconds (allowing for entrance animation + hold time)
+    Future.delayed(const Duration(milliseconds: 3000), () {
       if (mounted) {
         Navigator.of(context).pop();
       }
@@ -80,36 +80,9 @@ class _CheckInSuccessScreenState extends State<CheckInSuccessScreen> {
           .slideY(begin: 0.2, end: 0, duration: 400.ms, curve: Curves.easeOut),
           
           const SizedBox(height: 40),
-          
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 0,
-              ),
-              child: Text(
-                'Done',
-                style: GoogleFonts.outfit(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          )
-          .animate()
-          .fadeIn(delay: 600.ms)
-          .slideY(begin: 0.2, end: 0, duration: 400.ms, curve: Curves.easeOut),
-          
-          const SizedBox(height: 20),
         ],
       ),
     );
   }
+
 }

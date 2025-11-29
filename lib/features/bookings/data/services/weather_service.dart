@@ -4,6 +4,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final weatherServiceProvider = Provider((ref) => WeatherService());
 
+// Cache weather data based on location key "lat,lng"
+final weatherProvider = FutureProvider.family<Map<String, dynamic>, String>((ref, locationKey) async {
+  final parts = locationKey.split(',');
+  final lat = double.parse(parts[0]);
+  final lng = double.parse(parts[1]);
+  final service = ref.read(weatherServiceProvider);
+  return service.getWeather(lat, lng);
+});
+
 class WeatherService {
   Future<Map<String, dynamic>> getWeather(double lat, double lng) async {
     try {

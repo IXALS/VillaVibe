@@ -21,6 +21,7 @@ class BookingRepository {
       totalPrice: booking.totalPrice,
       status: booking.status,
       messageToHost: booking.messageToHost,
+      guestCount: booking.guestCount,
       createdAt: DateTime.now(),
     );
     await docRef.set(newBooking.toMap());

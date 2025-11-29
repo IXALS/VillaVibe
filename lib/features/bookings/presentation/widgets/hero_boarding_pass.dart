@@ -35,7 +35,6 @@ class HeroBoardingPass extends ConsumerStatefulWidget {
 class _HeroBoardingPassState extends ConsumerState<HeroBoardingPass> {
   late Timer _timer;
   Duration _timeLeft = Duration.zero;
-  Map<String, dynamic>? _weatherData;
   late bool _isExpanded;
   late bool _isCheckedIn;
   bool _isScanning = false;
@@ -47,7 +46,6 @@ class _HeroBoardingPassState extends ConsumerState<HeroBoardingPass> {
     _isCheckedIn = widget.booking.isCheckedIn;
     _calculateTimeLeft();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) => _calculateTimeLeft());
-    _fetchWeather();
   }
 
   @override
@@ -59,7 +57,6 @@ class _HeroBoardingPassState extends ConsumerState<HeroBoardingPass> {
         // Reset expansion state if it's a completely different booking
         if (widget.booking.id != oldWidget.booking.id) {
            _isExpanded = widget.isExpandedDefault;
-           _fetchWeather(); // Fetch weather for the new location
         }
       });
       _calculateTimeLeft();
@@ -85,49 +82,38 @@ class _HeroBoardingPassState extends ConsumerState<HeroBoardingPass> {
     }
   }
 
-  Future<void> _fetchWeather() async {
-    final weatherService = ref.read(weatherServiceProvider);
-    final data = await weatherService.getWeather(
-      widget.property.location.latitude,
-      widget.property.location.longitude,
-    );
-    if (mounted) {
-      setState(() {
-        _weatherData = data;
-      });
-    }
-  }
-
   Future<void> _simulateScan() async {
     setState(() => _isScanning = true);
-    await Future.delayed(const Duration(seconds: 2));
-    
     try {
-      final repository = ref.read(bookingRepositoryProvider);
-      await repository.updateCheckInStatus(widget.booking.id, true);
-      
+      // 1. Simulate Scan Delay
+      await Future.delayed(const Duration(seconds: 2));
+
       if (mounted) {
+        // 2. Optimistic Local Update
         setState(() {
           _isScanning = false;
           _isCheckedIn = true;
         });
 
-        // Show Success Modal
-        if (mounted) {
-          print('Showing CheckInSuccessScreen');
-          await showModalBottomSheet(
-            context: context,
-            isScrollControlled: true,
-            backgroundColor: Colors.transparent,
-            builder: (context) => CheckInSuccessScreen(property: widget.property),
-          );
-          print('CheckInSuccessScreen closed');
-        }
+        // 3. Show Success Modal
+        // We show this BEFORE updating the backend to ensure the widget is still mounted.
+        // If we update backend first, the StreamProvider might fire, removing this widget from the tree,
+        // causing showModalBottomSheet to never be called or fail.
+        await showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (context) => CheckInSuccessScreen(property: widget.property),
+        );
         
-        if (mounted) {
-           // Force refresh of the bookings list to move this trip to history
-           ref.invalidate(userBookingsProvider);
-        }
+        // 4. Update Backend & Refresh
+        // Now that the modal is closed, we can safely update the backend.
+        // This will likely trigger the StreamProvider to update, removing this card.
+        final repository = ref.read(bookingRepositoryProvider);
+        await repository.updateCheckInStatus(widget.booking.id, true);
+        
+        // Explicit invalidation just in case
+        ref.invalidate(userBookingsProvider);
       }
     } catch (e) {
       if (mounted) {
@@ -142,6 +128,8 @@ class _HeroBoardingPassState extends ConsumerState<HeroBoardingPass> {
   @override
   Widget build(BuildContext context) {
     final weatherService = ref.read(weatherServiceProvider);
+    final weatherAsync = ref.watch(weatherProvider('${widget.property.location.latitude},${widget.property.location.longitude}'));
+    
     final isPending = widget.booking.status == Booking.statusPending;
     final now = DateTime.now();
     final isOngoing = widget.booking.startDate.isBefore(now) && widget.booking.endDate.isAfter(now);
@@ -222,8 +210,8 @@ class _HeroBoardingPassState extends ConsumerState<HeroBoardingPass> {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                              if (_weatherData != null)
-                                Container(
+                              weatherAsync.when(
+                                data: (data) => Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                   decoration: BoxDecoration(
                                     color: Colors.white.withOpacity(0.2),
@@ -233,12 +221,12 @@ class _HeroBoardingPassState extends ConsumerState<HeroBoardingPass> {
                                   child: Row(
                                     children: [
                                       Text(
-                                        weatherService.getWeatherIcon(_weatherData!['code']),
+                                        weatherService.getWeatherIcon(data['code']),
                                         style: const TextStyle(fontSize: 16),
                                       ),
                                       const SizedBox(width: 4),
                                       Text(
-                                        '${_weatherData!['temp']}°',
+                                        '${data['temp']}°',
                                         style: GoogleFonts.outfit(
                                           color: Colors.white,
                                           fontWeight: FontWeight.w600,
@@ -247,6 +235,9 @@ class _HeroBoardingPassState extends ConsumerState<HeroBoardingPass> {
                                     ],
                                   ),
                                 ),
+                                loading: () => const SizedBox(),
+                                error: (_, __) => const SizedBox(),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 8),

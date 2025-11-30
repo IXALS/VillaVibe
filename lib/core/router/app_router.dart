@@ -17,6 +17,8 @@ import 'package:villavibe/features/bookings/presentation/screens/booking_flow_wr
 import 'package:villavibe/features/bookings/presentation/screens/booking_success_screen.dart';
 import 'package:villavibe/features/bookings/presentation/screens/qris_payment_screen.dart';
 import 'package:villavibe/features/properties/domain/models/property.dart';
+import 'package:villavibe/features/messages/presentation/screens/chat_list_screen.dart';
+import 'package:villavibe/features/messages/presentation/screens/chat_room_screen.dart';
 import 'package:villavibe/features/search/presentation/screens/search_screen.dart';
 import 'package:villavibe/features/search/presentation/screens/search_results_screen.dart';
 
@@ -207,6 +209,17 @@ GoRouter router(RouterRef ref) {
               body: Center(child: Text('Error: Destination data missing')),
             );
           }
+        },
+      ),
+      GoRoute(
+        path: '/messages',
+        builder: (context, state) => const ChatListScreen(),
+      ),
+      GoRoute(
+        path: '/message-room',
+        builder: (context, state) {
+          final chat = state.extra as Map<String, String>;
+          return ChatRoomScreen(chat: chat);
         },
       ),
       GoRoute(

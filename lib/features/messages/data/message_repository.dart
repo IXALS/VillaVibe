@@ -19,6 +19,7 @@ class MessageThreadsNotifier extends StateNotifier<List<MessageThread>> {
             unread: true,
             tripStatus: "Currently hosting",
             subtitle: "May 13–15 • Yucca Valley",
+            otherUserId: "mock_user_1",
           ),
           MessageThread(
             id: "2",
@@ -29,6 +30,7 @@ class MessageThreadsNotifier extends StateNotifier<List<MessageThread>> {
             unread: false,
             tripStatus: "Trip requested",
             subtitle: "Jul 7–13 • Yucca Valley",
+            otherUserId: "mock_user_2",
           ),
           MessageThread(
             id: "3",
@@ -39,6 +41,7 @@ class MessageThreadsNotifier extends StateNotifier<List<MessageThread>> {
             unread: false,
             tripStatus: "Trip confirmed",
             subtitle: "Aug 14–17 • Yucca Valley",
+            otherUserId: "mock_user_3",
           ),
         ]);
 

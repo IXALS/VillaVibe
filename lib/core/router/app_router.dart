@@ -219,7 +219,7 @@ GoRouter router(RouterRef ref) {
         builder: (context, state) => const ChatListScreen(),
       ),
       GoRoute(
-        path: '/message-room',
+        path: '/chat',
         builder: (context, state) {
           final chat = state.extra as Map<String, String>;
           return ChatRoomScreen(chat: chat);

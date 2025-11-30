@@ -10,12 +10,13 @@ class MessageThreadTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () {
-        context.push('/message-room', extra: {
+        context.push('/chat', extra: {
           "id": thread.id,
           "name": thread.name,
           "avatarUrl": thread.avatarUrl,
           "tripStatus": thread.tripStatus,
           "subtitle": thread.subtitle,
+          "userId": thread.otherUserId,
         });
       },
       child: Padding(
@@ -25,7 +26,12 @@ class MessageThreadTile extends StatelessWidget {
             // Avatar
             CircleAvatar(
               radius: 28,
-              backgroundImage: NetworkImage(thread.avatarUrl),
+              backgroundImage: thread.avatarUrl.isNotEmpty
+                  ? NetworkImage(thread.avatarUrl)
+                  : null,
+              child: thread.avatarUrl.isEmpty
+                  ? const Icon(Icons.person, color: Colors.grey)
+                  : null,
             ),
             const SizedBox(width: 14),
 

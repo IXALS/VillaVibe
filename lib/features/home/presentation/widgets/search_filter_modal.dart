@@ -12,6 +12,8 @@ class SearchFilterModal extends ConsumerStatefulWidget {
 
 class _SearchFilterModalState extends ConsumerState<SearchFilterModal> {
   late RangeValues _currentRangeValues;
+  final List<String> _selectedVibes = [];
+  final List<String> _selectedArchitectures = [];
 
   @override
   void initState() {
@@ -28,12 +30,15 @@ class _SearchFilterModalState extends ConsumerState<SearchFilterModal> {
     }
 
     _currentRangeValues = RangeValues(start, end);
+    _selectedVibes.addAll(filterState.vibes);
+    _selectedArchitectures.addAll(filterState.architectures);
   }
 
   void _applyFilters() {
-    ref
-        .read(searchFilterStateProvider.notifier)
-        .setPriceRange(_currentRangeValues);
+    final notifier = ref.read(searchFilterStateProvider.notifier);
+    notifier.setPriceRange(_currentRangeValues);
+    notifier.setVibes(_selectedVibes);
+    notifier.setArchitectures(_selectedArchitectures);
     Navigator.of(context).pop();
   }
 
@@ -109,6 +114,108 @@ class _SearchFilterModalState extends ConsumerState<SearchFilterModal> {
               Text('\$${_currentRangeValues.start.round()}'),
               Text('\$${_currentRangeValues.end.round()}'),
             ],
+          ),
+
+          const SizedBox(height: 24),
+
+          // Vibe Filter
+          const Text(
+            'Vibe',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              'Zen',
+              'Party',
+              'Romantic',
+              'Family',
+              'Work'
+            ].map((vibe) {
+              final isSelected = _selectedVibes.contains(vibe);
+              return FilterChip(
+                label: Text(vibe),
+                selected: isSelected,
+                onSelected: (selected) {
+                  setState(() {
+                    if (selected) {
+                      _selectedVibes.add(vibe);
+                    } else {
+                      _selectedVibes.remove(vibe);
+                    }
+                  });
+                },
+                backgroundColor: Colors.grey[100],
+                selectedColor: Colors.black,
+                labelStyle: TextStyle(
+                  color: isSelected ? Colors.white : Colors.black,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  side: BorderSide(
+                    color: isSelected ? Colors.transparent : Colors.grey[300]!,
+                  ),
+                ),
+                showCheckmark: false,
+              );
+            }).toList(),
+          ),
+
+          const SizedBox(height: 24),
+
+          // Architecture Filter
+          const Text(
+            'Architecture',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              'Modern',
+              'Joglo',
+              'Bamboo',
+              'Tropical',
+              'Industrial'
+            ].map((style) {
+              final isSelected = _selectedArchitectures.contains(style);
+              return FilterChip(
+                label: Text(style),
+                selected: isSelected,
+                onSelected: (selected) {
+                  setState(() {
+                    if (selected) {
+                      _selectedArchitectures.add(style);
+                    } else {
+                      _selectedArchitectures.remove(style);
+                    }
+                  });
+                },
+                backgroundColor: Colors.grey[100],
+                selectedColor: Colors.black,
+                labelStyle: TextStyle(
+                  color: isSelected ? Colors.white : Colors.black,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  side: BorderSide(
+                    color: isSelected ? Colors.transparent : Colors.grey[300]!,
+                  ),
+                ),
+                showCheckmark: false,
+              );
+            }).toList(),
           ),
 
           const SizedBox(height: 32),

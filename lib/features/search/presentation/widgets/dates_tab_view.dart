@@ -132,10 +132,13 @@ class _DatesTabViewState extends State<DatesTabView> {
               selectionShape: DateRangePickerSelectionShape.circle,
               onSelectionChanged: (args) {
                 if (args.value is PickerDateRange) {
-                  widget.onDatesChanged(
-                    args.value.startDate,
-                    args.value.endDate,
-                  );
+                  // Wrap in microtask to avoid "modify provider during build" error
+                  Future.microtask(() {
+                    widget.onDatesChanged(
+                      args.value.startDate,
+                      args.value.endDate,
+                    );
+                  });
                 }
               },
             ),

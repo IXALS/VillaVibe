@@ -131,6 +131,9 @@ class _HeroBoardingPassState extends ConsumerState<HeroBoardingPass> {
     final weatherAsync = ref.watch(weatherProvider('${widget.property.location.latitude},${widget.property.location.longitude}'));
     
     final isPending = widget.booking.status == Booking.statusPending;
+    final isRequestPending = isPending && !widget.property.isInstantBook;
+    final isPaymentPending = isPending && widget.property.isInstantBook;
+    
     final now = DateTime.now();
     final isOngoing = widget.booking.startDate.isBefore(now) && widget.booking.endDate.isAfter(now);
     
@@ -268,21 +271,25 @@ class _HeroBoardingPassState extends ConsumerState<HeroBoardingPass> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                             decoration: BoxDecoration(
-                              color: isPending 
+                              color: isPaymentPending 
                                   ? Colors.orange.withOpacity(0.9) 
-                                  : (_isCheckedIn 
-                                      ? Colors.blue.withOpacity(0.9)
-                                      : (isOngoing ? Colors.green.withOpacity(0.9) : Colors.black.withOpacity(0.6))),
+                                  : (isRequestPending 
+                                      ? Colors.blueGrey.withOpacity(0.9)
+                                      : (_isCheckedIn 
+                                          ? Colors.blue.withOpacity(0.9)
+                                          : (isOngoing ? Colors.green.withOpacity(0.9) : Colors.black.withOpacity(0.6)))),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Column(
                               children: [
                                 Text(
-                                  isPending 
+                                  isPaymentPending 
                                       ? 'PAYMENT REQUIRED' 
-                                      : (_isCheckedIn 
-                                          ? 'CHECKED IN' 
-                                          : (isOngoing ? 'HAPPENING NOW' : 'CHECK-IN IN')),
+                                      : (isRequestPending 
+                                          ? 'REQUEST SENT'
+                                          : (_isCheckedIn 
+                                              ? 'CHECKED IN' 
+                                              : (isOngoing ? 'HAPPENING NOW' : 'CHECK-IN IN'))),
                                   style: GoogleFonts.outfit(
                                     color: Colors.white,
                                     fontSize: 10,
@@ -357,13 +364,13 @@ class _HeroBoardingPassState extends ConsumerState<HeroBoardingPass> {
 
           // Bottom Tear-off Section
           GestureDetector(
-            onTap: isPending ? widget.onPaymentTap : () => setState(() => _isExpanded = !_isExpanded),
+            onTap: isPaymentPending ? widget.onPaymentTap : (isRequestPending ? null : () => setState(() => _isExpanded = !_isExpanded)),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               margin: const EdgeInsets.symmetric(horizontal: 20),
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: isPending ? Colors.orange[50] : (_isCheckedIn ? Colors.blue[50] : Colors.white),
+                color: isPaymentPending ? Colors.orange[50] : (isRequestPending ? Colors.grey[50] : (_isCheckedIn ? Colors.blue[50] : Colors.white)),
                 borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
                 boxShadow: [
                   BoxShadow(
@@ -383,11 +390,15 @@ class _HeroBoardingPassState extends ConsumerState<HeroBoardingPass> {
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: isPending ? Colors.orange : (_isCheckedIn ? Colors.blue : Colors.black),
+                              color: isPaymentPending ? Colors.orange : (isRequestPending ? Colors.grey : (_isCheckedIn ? Colors.blue : Colors.black)),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Icon(
-                              isPending ? LucideIcons.creditCard : (_isCheckedIn ? LucideIcons.check : LucideIcons.qrCode), 
+                              isPaymentPending 
+                                  ? LucideIcons.creditCard 
+                                  : (isRequestPending 
+                                      ? LucideIcons.clock 
+                                      : (_isCheckedIn ? LucideIcons.check : LucideIcons.qrCode)), 
                               color: Colors.white, 
                               size: 20
                             ),
@@ -397,17 +408,25 @@ class _HeroBoardingPassState extends ConsumerState<HeroBoardingPass> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                isPending ? 'Complete Payment' : (_isCheckedIn ? 'You are all set' : 'Boarding Pass'),
+                                isPaymentPending 
+                                    ? 'Complete Payment' 
+                                    : (isRequestPending 
+                                        ? 'Waiting for Approval' 
+                                        : (_isCheckedIn ? 'You are all set' : 'Boarding Pass')),
                                 style: GoogleFonts.outfit(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
-                                  color: isPending ? Colors.orange[900] : (_isCheckedIn ? Colors.blue[900] : Colors.black),
+                                  color: isPaymentPending ? Colors.orange[900] : (isRequestPending ? Colors.grey[800] : (_isCheckedIn ? Colors.blue[900] : Colors.black)),
                                 ),
                               ),
                               Text(
-                                isPending ? 'Tap to pay now' : (_isCheckedIn ? 'Enjoy your trip' : 'Tap to scan'),
+                                isPaymentPending 
+                                    ? 'Tap to pay now' 
+                                    : (isRequestPending 
+                                        ? 'Host is reviewing your request' 
+                                        : (_isCheckedIn ? 'Enjoy your trip' : 'Tap to scan')),
                                 style: GoogleFonts.outfit(
-                                  color: isPending ? Colors.orange[700] : (_isCheckedIn ? Colors.blue[700] : Colors.grey),
+                                  color: isPaymentPending ? Colors.orange[700] : (isRequestPending ? Colors.grey[600] : (_isCheckedIn ? Colors.blue[700] : Colors.grey)),
                                   fontSize: 12,
                                 ),
                               ),
@@ -415,10 +434,11 @@ class _HeroBoardingPassState extends ConsumerState<HeroBoardingPass> {
                           ),
                         ],
                       ),
-                      Icon(
-                        isPending ? LucideIcons.chevronRight : (_isExpanded ? LucideIcons.chevronUp : LucideIcons.chevronDown),
-                        color: isPending ? Colors.orange[300] : (_isCheckedIn ? Colors.blue[300] : Colors.grey),
-                      ),
+                      if (!isRequestPending)
+                        Icon(
+                          isPaymentPending ? LucideIcons.chevronRight : (_isExpanded ? LucideIcons.chevronUp : LucideIcons.chevronDown),
+                          color: isPaymentPending ? Colors.orange[300] : (_isCheckedIn ? Colors.blue[300] : Colors.grey),
+                        ),
                     ],
                   ),
                   if (!isPending && _isExpanded) ...[

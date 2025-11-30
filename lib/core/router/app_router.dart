@@ -9,6 +9,7 @@ import 'package:villavibe/features/auth/data/repositories/auth_repository.dart';
 
 import 'package:villavibe/features/properties/presentation/screens/host_dashboard_screen.dart';
 import 'package:villavibe/features/properties/presentation/screens/host_property_form.dart';
+import 'package:villavibe/features/host/presentation/screens/onboarding/host_onboarding_screen.dart';
 import 'package:villavibe/features/home/presentation/screens/home_screen.dart';
 import 'package:villavibe/features/guest/presentation/screens/villa_detail_screen.dart';
 import 'package:villavibe/features/home/presentation/screens/destination_detail_screen.dart';
@@ -86,6 +87,13 @@ GoRouter router(RouterRef ref) {
         path: '/host-dashboard',
         builder: (context, state) => const HostDashboardScreen(),
       ),
+      GoRoute(
+        path: '/host/onboarding',
+        builder: (context, state) {
+          final property = state.extra as Property?;
+          return HostOnboardingScreen(initialProperty: property);
+        },
+      ),
       // Removed /my-bookings as it's now part of Home (Tab 2)
       GoRoute(
         path: '/property/:id',
@@ -117,12 +125,28 @@ GoRouter router(RouterRef ref) {
       GoRoute(
         path: '/booking',
         builder: (context, state) {
-          final property = state.extra as Property?;
+          Property? property;
+          DateTime? startDate;
+          DateTime? endDate;
+
+          if (state.extra is Property) {
+            property = state.extra as Property;
+          } else if (state.extra is Map<String, dynamic>) {
+            final map = state.extra as Map<String, dynamic>;
+            property = map['property'] as Property?;
+            startDate = map['startDate'] as DateTime?;
+            endDate = map['endDate'] as DateTime?;
+          }
+
           if (property == null) {
             return const Scaffold(
                 body: Center(child: Text('Error: Property data missing')));
           }
-          return BookingFlowWrapper(property: property);
+          return BookingFlowWrapper(
+            property: property,
+            initialStartDate: startDate,
+            initialEndDate: endDate,
+          );
         },
         routes: [
           GoRoute(

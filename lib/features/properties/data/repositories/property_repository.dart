@@ -38,9 +38,55 @@ class PropertyRepository {
       cancellationPolicy: property.cancellationPolicy,
       houseRules: property.houseRules,
       safetyItems: property.safetyItems,
+      location: property.location,
+      
+      // Rich Data Fields
+      architectureStyle: property.architectureStyle,
+      landSize: property.landSize,
+      vibe: property.vibe,
+      bedroomNames: property.bedroomNames,
+      setting: property.setting,
+      privacyLevel: property.privacyLevel,
+      staffServices: property.staffServices,
+      outdoorAmenities: property.outdoorAmenities,
+      isInstantBook: property.isInstantBook,
     );
     await docRef.set(newProperty.toMap());
   }
+
+  Future<void> updateProperty(Property property) async {
+    if (property.id.isEmpty) return;
+    await _firestore.collection('properties').doc(property.id).update(property.toMap());
+  }
+
+  Future<void> deleteProperty(String id) async {
+    if (id.isEmpty) return;
+    await _firestore.collection('properties').doc(id).delete();
+  }
+
+  Future<void> updatePropertyPrice(String propertyId, int newPrice) async {
+    if (propertyId.isEmpty) return;
+    await _firestore.collection('properties').doc(propertyId).update({
+      'pricePerNight': newPrice,
+    });
+  }
+
+  Future<void> setCustomPrice(String propertyId, DateTime date, int price) async {
+    if (propertyId.isEmpty) return;
+    final dateStr = "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+    await _firestore.collection('properties').doc(propertyId).update({
+      'customPrices.$dateStr': price,
+    });
+  }
+
+  Future<void> updateInstantBook(String propertyId, bool isInstantBook) async {
+    if (propertyId.isEmpty) return;
+    await _firestore.collection('properties').doc(propertyId).update({
+      'isInstantBook': isInstantBook,
+    });
+  }
+
+
 
   Stream<List<Property>> getPropertiesByHost(String hostId) {
     return _firestore
@@ -56,10 +102,69 @@ class PropertyRepository {
         snapshot.docs.map((doc) => Property.fromFirestore(doc)).toList());
   }
 
+  Future<void> seedProperties(List<Property> properties) async {
+    final batch = _firestore.batch();
+    
+    for (var property in properties) {
+      final docRef = _firestore.collection('properties').doc();
+      // Create a copy with the new ID
+      final newProperty = Property(
+        id: docRef.id,
+        hostId: property.hostId,
+        name: property.name,
+        description: property.description,
+        pricePerNight: property.pricePerNight,
+        address: property.address,
+        city: property.city,
+        specs: property.specs,
+        amenities: property.amenities,
+        images: property.images,
+        rating: property.rating,
+        hostName: property.hostName,
+        hostAvatar: property.hostAvatar,
+        hostYearsHosting: property.hostYearsHosting,
+        reviewsCount: property.reviewsCount,
+        categoryId: property.categoryId,
+        architectureStyle: property.architectureStyle,
+        landSize: property.landSize,
+        vibe: property.vibe,
+        bedroomNames: property.bedroomNames,
+        setting: property.setting,
+        privacyLevel: property.privacyLevel,
+        staffServices: property.staffServices,
+        outdoorAmenities: property.outdoorAmenities,
+        location: property.location,
+        // Ensure all fields are copied, including those not explicitly listed in the snippet
+        reviews: property.reviews,
+        hostWork: property.hostWork,
+        hostDescription: property.hostDescription,
+        hostResponseRate: property.hostResponseRate,
+        hostResponseTime: property.hostResponseTime,
+        cancellationPolicy: property.cancellationPolicy,
+        houseRules: property.houseRules,
+        safetyItems: property.safetyItems,
+        isInstantBook: property.isInstantBook,
+      );
+      
+      batch.set(docRef, newProperty.toMap());
+    }
+    
+    await batch.commit();
+  }
+  
   Future<Property?> getProperty(String id) async {
     final doc = await _firestore.collection('properties').doc(id).get();
     if (!doc.exists) return null;
     return Property.fromFirestore(doc);
+  }
+
+  Future<bool> hasProperties(String hostId) async {
+    final snapshot = await _firestore
+        .collection('properties')
+        .where('hostId', isEqualTo: hostId)
+        .limit(1)
+        .get();
+    return snapshot.docs.isNotEmpty;
   }
 }
 

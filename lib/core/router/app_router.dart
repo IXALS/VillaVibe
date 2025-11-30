@@ -157,12 +157,14 @@ GoRouter router(RouterRef ref) {
               final extra = state.extra;
               Property? property;
               String? bookingId;
+              String? qrString;
 
               if (extra is Property) {
                 property = extra;
               } else if (extra is Map<String, dynamic>) {
                 property = extra['property'] as Property?;
                 bookingId = extra['bookingId'] as String?;
+                qrString = extra['qrString'] as String?;
               }
 
               return CustomTransitionPage(
@@ -174,6 +176,7 @@ GoRouter router(RouterRef ref) {
                     : QrisPaymentScreen(
                         property: property,
                         bookingId: bookingId,
+                        qrString: qrString,
                       ),
                 transitionsBuilder:
                     (context, animation, secondaryAnimation, child) {

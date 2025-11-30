@@ -60,6 +60,15 @@ class BookingRepository {
     return null;
   }
 
+  Stream<Booking?> streamBooking(String bookingId) {
+    return _firestore.collection('bookings').doc(bookingId).snapshots().map((doc) {
+      if (doc.exists) {
+        return Booking.fromFirestore(doc);
+      }
+      return null;
+    });
+  }
+
   Stream<List<Booking>> getUserBookings(String userId) {
     return _firestore
         .collection('bookings')

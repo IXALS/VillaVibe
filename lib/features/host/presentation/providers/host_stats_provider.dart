@@ -38,10 +38,10 @@ class HostStats {
 
 final hostStatsProvider = StreamProvider.family<HostStats, String>((ref, hostId) {
   final bookingsStream = ref.watch(bookingRepositoryProvider).getHostBookings(hostId);
-  final propertiesStream = ref.watch(hostPropertiesProvider(hostId));
+  final propertiesAsync = ref.watch(hostPropertiesProvider(hostId));
 
   return bookingsStream.asyncMap((bookings) async {
-    final properties = await propertiesStream.first;
+    final properties = propertiesAsync.value ?? [];
     return _calculateStats(bookings, properties);
   });
 });

@@ -76,3 +76,7 @@ final bookingControllerProvider = StateNotifierProvider.family
 final propertyBookingsProvider = StreamProvider.family<List<Booking>, String>((ref, propertyId) {
   return ref.watch(bookingRepositoryProvider).getPropertyBookingsStream(propertyId);
 });
+
+final bookingStreamProvider = StreamProvider.family<Booking?, String>((ref, bookingId) {
+  return ref.watch(bookingRepositoryProvider).streamBooking(bookingId);
+});

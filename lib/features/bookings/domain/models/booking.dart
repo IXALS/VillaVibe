@@ -14,6 +14,8 @@ class Booking {
   final DateTime createdAt;
   final bool isCheckedIn;
 
+  final String? qrString;
+
   static const String statusPending = 'pending';
   static const String statusPaid = 'paid';
   static const String statusCancelled = 'cancelled';
@@ -32,6 +34,7 @@ class Booking {
     this.messageToHost = '',
     required this.createdAt,
     this.isCheckedIn = false,
+    this.qrString,
   });
 
   factory Booking.fromFirestore(DocumentSnapshot doc) {
@@ -50,7 +53,8 @@ class Booking {
       createdAt: data['createdAt'] != null
           ? (data['createdAt'] as Timestamp).toDate()
           : DateTime.now(),
-      isCheckedIn: data['isCheckedIn'] == true, // Safely handle null or missing field
+      isCheckedIn: data['isCheckedIn'] == true,
+      qrString: data['qrString'],
     );
   }
 
@@ -66,6 +70,7 @@ class Booking {
       'guestCount': guestCount,
       'messageToHost': messageToHost,
       'createdAt': Timestamp.fromDate(createdAt),
+      'qrString': qrString,
     };
   }
 }

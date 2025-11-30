@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:villavibe/features/bookings/presentation/states/booking_state.dart';
 import 'package:villavibe/features/bookings/domain/models/booking.dart';
 import 'package:villavibe/features/properties/domain/models/property.dart';
+import 'package:villavibe/features/bookings/data/repositories/booking_repository.dart'; // Added this import
+import 'package:villavibe/features/properties/domain/services/price_service.dart';
 
 class BookingController extends StateNotifier<BookingState> {
   final Property property;
@@ -11,20 +13,25 @@ class BookingController extends StateNotifier<BookingState> {
           checkInDate: DateTime.now().add(const Duration(days: 1)),
           checkOutDate: DateTime.now().add(const Duration(days: 3)),
           guestCount: 1,
-          totalPrice: property.pricePerNight * 2, // Default 2 nights
+          totalPrice: PriceService.calculateTotalPrice(
+            property,
+            DateTime.now().add(const Duration(days: 1)),
+            DateTime.now().add(const Duration(days: 3)),
+          ),
           selectedPaymentMethod: PaymentMethod.qris,
           messageToHost: '',
           currentStep: 0,
         ));
 
   void updateDates(DateTime start, DateTime end) {
-    final nights = end.difference(start).inDays;
     state = state.copyWith(
       checkInDate: start,
       checkOutDate: end,
-      totalPrice: property.pricePerNight * nights,
+      totalPrice: PriceService.calculateTotalPrice(property, start, end),
     );
   }
+
+
 
   void updateGuests(int count) {
     state = state.copyWith(guestCount: count);
@@ -64,4 +71,8 @@ class BookingController extends StateNotifier<BookingState> {
 final bookingControllerProvider = StateNotifierProvider.family
     .autoDispose<BookingController, BookingState, Property>((ref, property) {
   return BookingController(property);
+});
+
+final propertyBookingsProvider = StreamProvider.family<List<Booking>, String>((ref, propertyId) {
+  return ref.watch(bookingRepositoryProvider).getPropertyBookingsStream(propertyId);
 });

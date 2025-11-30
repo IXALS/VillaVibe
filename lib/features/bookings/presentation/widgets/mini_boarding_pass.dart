@@ -96,7 +96,7 @@ class MiniBoardingPass extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        booking.status.toUpperCase(),
+                        _getStatusText(booking.status),
                         style: GoogleFonts.outfit(
                           color: _getStatusColor(booking.status),
                           fontSize: 10,
@@ -123,13 +123,20 @@ class MiniBoardingPass extends StatelessWidget {
 );
   }
 
+  String _getStatusText(String status) {
+    if (status == Booking.statusPending) {
+      return property.isInstantBook ? 'PAYMENT REQUIRED' : 'REQUEST SENT';
+    }
+    return status.toUpperCase();
+  }
+
   Color _getStatusColor(String status) {
     switch (status) {
       case Booking.statusPaid:
       case Booking.statusCompleted:
         return Colors.green;
       case Booking.statusPending:
-        return Colors.orange;
+        return property.isInstantBook ? Colors.orange : Colors.blueGrey;
       case Booking.statusCancelled:
         return Colors.red;
       default:

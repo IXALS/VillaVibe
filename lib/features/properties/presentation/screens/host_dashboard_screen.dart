@@ -5,6 +5,7 @@ import '../../data/repositories/property_repository.dart';
 import '../../../auth/data/repositories/auth_repository.dart';
 
 import '../../../../core/presentation/widgets/property_card_shimmer.dart';
+import 'package:villavibe/features/host/presentation/screens/mode_transition_screen.dart';
 
 class HostDashboardScreen extends ConsumerWidget {
   const HostDashboardScreen({super.key});
@@ -18,7 +19,30 @@ class HostDashboardScreen extends ConsumerWidget {
         title: const Text('Host Dashboard'),
         actions: [
           TextButton.icon(
-            onPressed: () => context.go('/home'),
+            onPressed: () {
+              Navigator.of(context).push(
+                PageRouteBuilder(
+                  pageBuilder: (context, animation, secondaryAnimation) =>
+                      const ModeTransitionScreen(targetIsHost: false),
+                  transitionsBuilder:
+                      (context, animation, secondaryAnimation, child) {
+                    const begin = Offset(0.0, 1.0);
+                    const end = Offset.zero;
+                    const curve = Curves.easeInOut;
+
+                    var tween = Tween(begin: begin, end: end)
+                        .chain(CurveTween(curve: curve));
+
+                    return SlideTransition(
+                      position: animation.drive(tween),
+                      child: child,
+                    );
+                  },
+                  transitionDuration: const Duration(milliseconds: 500),
+                  reverseTransitionDuration: const Duration(milliseconds: 500),
+                ),
+              );
+            },
             icon: Icon(Icons.person,
                 color: Theme.of(context).colorScheme.primary),
             label: Text('Guest Mode',

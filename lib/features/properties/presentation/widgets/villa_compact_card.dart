@@ -15,12 +15,16 @@ import 'package:villavibe/features/properties/domain/models/property.dart';
 class VillaCompactCard extends ConsumerStatefulWidget {
   final Property property;
   final VoidCallback? onTap;
+  final int? displayedPrice;
+  final bool showFromPrefix;
 
   const VillaCompactCard({
     super.key,
     required this.property,
     this.onTap,
     this.heroTagPrefix,
+    this.displayedPrice,
+    this.showFromPrefix = false,
   });
 
   final String? heroTagPrefix;
@@ -91,6 +95,7 @@ class _VillaCompactCardState extends ConsumerState<VillaCompactCard>
                             ? CachedNetworkImage(
                                 imageUrl: widget.property.images.first,
                                 fit: BoxFit.cover,
+                                memCacheWidth: 400, // Optimize for list view
                                 placeholder: (context, url) => Container(
                                   color: Colors.grey[200],
                                 ),
@@ -107,6 +112,41 @@ class _VillaCompactCardState extends ConsumerState<VillaCompactCard>
                       ),
                     ),
                   ),
+                  // Vibe Badge
+                  if (widget.property.vibe.isNotEmpty)
+                    Positioned(
+                      top: 12,
+                      left: 12,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.6),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              LucideIcons.sparkles,
+                              color: Colors.white,
+                              size: 10,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              widget.property.vibe,
+                              style: GoogleFonts.outfit(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   // Heart Icon
                   Positioned(
                     top: 12,
@@ -217,7 +257,7 @@ class _VillaCompactCardState extends ConsumerState<VillaCompactCard>
                 children: [
                   Expanded(
                     child: Text(
-                      '${currencyFormat.format(widget.property.pricePerNight)} / night',
+                      '${widget.showFromPrefix ? "From " : ""}${currencyFormat.format(widget.displayedPrice ?? widget.property.pricePerNight)} / night',
                       maxLines: 2,
                       style: GoogleFonts.outfit(
                         fontSize: 14,

@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:villavibe/features/bookings/presentation/controllers/booking_controller.dart';
 import 'package:villavibe/features/properties/domain/models/property.dart';
+import 'package:villavibe/features/bookings/data/repositories/booking_repository.dart';
+import 'package:villavibe/features/bookings/domain/models/booking.dart';
 
 class BookingReviewContent extends ConsumerWidget {
   final Property property;
@@ -133,42 +135,72 @@ class BookingReviewContent extends ConsumerWidget {
     );
   }
 
+
+
   Widget _buildTripDetailsSection(BuildContext context, dynamic bookingState,
       BookingController controller) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildDetailRow(
-          context,
-          'Dates',
-          '${DateFormat('MMM d').format(bookingState.checkInDate)} – ${DateFormat('d, yyyy').format(bookingState.checkOutDate)}',
-          'Change',
-          () async {
-            final picked = await showDateRangePicker(
-              context: context,
-              firstDate: DateTime.now(),
-              lastDate: DateTime.now().add(const Duration(days: 365)),
-              initialDateRange: DateTimeRange(
-                start: bookingState.checkInDate,
-                end: bookingState.checkOutDate,
-              ),
-            );
-            if (picked != null) {
-              controller.updateDates(picked.start, picked.end);
-            }
-          },
-        ),
-        const Divider(height: 32),
-        _buildDetailRow(
-          context,
-          'Guests',
-          '${bookingState.guestCount} guest${bookingState.guestCount > 1 ? 's' : ''}',
-          'Change',
-          () {
-            _showGuestEditModal(context, bookingState.guestCount, controller);
-          },
-        ),
-      ],
+    return Consumer(
+      builder: (context, ref, child) {
+        final bookingsAsync = ref.watch(propertyBookingsProvider(property.id));
+        
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildDetailRow(
+              context,
+              'Dates',
+              '${DateFormat('MMM d').format(bookingState.checkInDate)} – ${DateFormat('d, yyyy').format(bookingState.checkOutDate)}',
+              'Change',
+              () async {
+                final bookings = bookingsAsync.valueOrNull ?? [];
+                
+                bool isDateBlocked(DateTime day) {
+                  for (var booking in bookings) {
+                    final bookingStart = DateTime(booking.startDate.year, booking.startDate.month, booking.startDate.day);
+                    final bookingEnd = DateTime(booking.endDate.year, booking.endDate.month, booking.endDate.day);
+                    final checkDay = DateTime(day.year, day.month, day.day);
+                    
+                    if (checkDay.isAfter(bookingStart.subtract(const Duration(days: 1))) && 
+                        checkDay.isBefore(bookingEnd.add(const Duration(days: 1)))) {
+                      return true; // Blocked
+                    }
+                  }
+                  return false; // Available
+                }
+
+                DateTimeRange? initialRange;
+                if (!isDateBlocked(bookingState.checkInDate) && !isDateBlocked(bookingState.checkOutDate)) {
+                   initialRange = DateTimeRange(
+                    start: bookingState.checkInDate,
+                    end: bookingState.checkOutDate,
+                  );
+                }
+
+                final picked = await showDateRangePicker(
+                  context: context,
+                  firstDate: DateTime.now(),
+                  lastDate: DateTime.now().add(const Duration(days: 365)),
+                  initialDateRange: initialRange,
+                  selectableDayPredicate: (day, start, end) => !isDateBlocked(day),
+                );
+                if (picked != null) {
+                  controller.updateDates(picked.start, picked.end);
+                }
+              },
+            ),
+            const Divider(height: 32),
+            _buildDetailRow(
+              context,
+              'Guests',
+              '${bookingState.guestCount} guest${bookingState.guestCount > 1 ? 's' : ''}',
+              'Change',
+              () {
+                _showGuestEditModal(context, bookingState.guestCount, controller);
+              },
+            ),
+          ],
+        );
+      }
     );
   }
 
@@ -402,7 +434,7 @@ class BookingReviewContent extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                      '${bookingState.nights} nights x ${currencyFormat.format(property.pricePerNight)}'),
+                      'Total for ${bookingState.nights} nights'),
                   Text(currencyFormat.format(bookingState.totalPrice)),
                 ],
               ),

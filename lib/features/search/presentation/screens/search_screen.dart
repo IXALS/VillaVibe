@@ -67,18 +67,22 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         children: [
           // Glass Blur Effect
           Positioned.fill(
-            child: AnimatedBuilder(
-              animation: routeAnimation ?? const AlwaysStoppedAnimation(1.0),
-              builder: (context, child) {
-                final double blurValue = (routeAnimation?.value ?? 1.0) * 20;
-                return BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: blurValue, sigmaY: blurValue),
-                  child: Container(
-                    color: Colors.white.withOpacity(0.6 * (routeAnimation?.value ?? 1.0)),
+            child: routeAnimation != null
+                ? FadeTransition(
+                    opacity: routeAnimation,
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10), // Reduced blur for performance
+                      child: Container(
+                        color: Colors.white.withOpacity(0.6),
+                      ),
+                    ),
+                  )
+                : BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                    child: Container(
+                      color: Colors.white.withOpacity(0.6),
+                    ),
                   ),
-                );
-              },
-            ),
           ),
           SafeArea(
             bottom: false,
@@ -310,12 +314,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 ),
               ),
             ),
+                  ],
+                ),
+              ),
           ],
         ),
-      ),
-    ],
-  ),
-);
+    );
   }
 
   Widget _buildEntranceExitAnimation({

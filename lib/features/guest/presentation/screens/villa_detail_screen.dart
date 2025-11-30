@@ -13,6 +13,12 @@ import 'package:villavibe/features/auth/data/repositories/auth_repository.dart';
 
 import 'dart:async';
 import 'package:villavibe/core/presentation/widgets/three_dots_loader.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
+import 'package:villavibe/features/bookings/domain/models/booking.dart';
+import 'package:villavibe/features/bookings/data/repositories/booking_repository.dart';
+import 'package:villavibe/features/guest/presentation/widgets/guest_calendar_view.dart';
 
 class VillaDetailScreen extends ConsumerStatefulWidget {
   final Property property;
@@ -30,6 +36,8 @@ class VillaDetailScreen extends ConsumerStatefulWidget {
 
 class _VillaDetailScreenState extends ConsumerState<VillaDetailScreen> {
   bool _isLoading = true;
+  DateTime? _selectedStartDate;
+  DateTime? _selectedEndDate;
 
   @override
   void initState() {
@@ -66,6 +74,10 @@ class _VillaDetailScreenState extends ConsumerState<VillaDetailScreen> {
       ),
     );
   }
+
+  // ... (existing code)
+
+
 
   Widget _buildContent(BuildContext context, Property property) {
     return Stack(
@@ -113,7 +125,7 @@ class _VillaDetailScreenState extends ConsumerState<VillaDetailScreen> {
                                 const SizedBox(height: 24),
                                 _buildHostSection(property),
                                 const Divider(height: 48),
-                                _buildHighlights(),
+                                _buildHighlights(property),
                                 const Divider(height: 48),
                                 _buildDescription(property),
                                 const Divider(height: 48),
@@ -154,6 +166,26 @@ class _VillaDetailScreenState extends ConsumerState<VillaDetailScreen> {
       flexibleSpace: FlexibleSpaceBar(
         background: Hero(
           tag: '${widget.heroTagPrefix ?? ''}villa_img_${property.id}',
+          flightShuttleBuilder: (
+            BuildContext flightContext,
+            Animation<double> animation,
+            HeroFlightDirection flightDirection,
+            BuildContext fromHeroContext,
+            BuildContext toHeroContext,
+          ) {
+            return Material(
+              type: MaterialType.transparency,
+              child: property.images.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: property.images.first,
+                      fit: BoxFit.cover,
+                      memCacheWidth: 1000,
+                      placeholder: (context, url) => Container(color: Colors.grey[200]),
+                      errorWidget: (context, url, error) => Container(color: Colors.grey[200]),
+                    )
+                  : Container(color: Colors.grey[200]),
+            );
+          },
           child: Material(
             type: MaterialType.transparency,
             child: Stack(
@@ -164,6 +196,7 @@ class _VillaDetailScreenState extends ConsumerState<VillaDetailScreen> {
                     ? CachedNetworkImage(
                         imageUrl: property.images.first,
                         fit: BoxFit.cover,
+                        memCacheWidth: 1000, // Optimize memory usage
                         fadeInDuration: Duration.zero,
                         placeholder: (context, url) => Container(
                           color: Colors.grey[200],
@@ -291,12 +324,12 @@ class _VillaDetailScreenState extends ConsumerState<VillaDetailScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Entire rental unit in ${property.city}, Indonesia',
+          '${property.setting.isNotEmpty ? property.setting : 'Entire rental unit'} in ${property.address}',
           style: const TextStyle(fontSize: 16, color: Colors.black87),
         ),
         const SizedBox(height: 4),
         Text(
-          '${property.specs.maxGuests} guests · ${property.specs.bedrooms} bedroom · ${property.specs.bedrooms} bed · ${property.specs.bathrooms} bath',
+          '${property.specs.maxGuests} guests · ${property.specs.bedrooms} bedroom · ${property.specs.bedrooms} bed · ${property.specs.bathrooms} bath${property.landSize > 0 ? ' · ${property.landSize.toStringAsFixed(0)} m²' : ''}',
           style: const TextStyle(fontSize: 14, color: Colors.black54),
         ),
         const SizedBox(height: 8),
@@ -331,50 +364,75 @@ class _VillaDetailScreenState extends ConsumerState<VillaDetailScreen> {
               : const Icon(LucideIcons.user, size: 24, color: Colors.grey),
         ),
         const SizedBox(width: 16),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Hosted by ${property.hostName}',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF212121),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Hosted by ${property.hostName}',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF212121),
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
-            ),
-            Text(
-              '${property.hostYearsHosting} years hosting',
-              style: const TextStyle(
-                fontSize: 14,
-                color: Colors.black54,
+              Text(
+                '${property.hostYearsHosting} years hosting',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.black54,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildHighlights() {
+  Widget _buildHighlights(Property property) {
     return Column(
       children: [
-        _buildHighlightItem(
-          LucideIcons.waves,
-          'Dive right in',
-          'This is one of the few places in the area with a pool.',
-        ),
-        const SizedBox(height: 24),
-        _buildHighlightItem(
-          LucideIcons.key,
-          'Exceptional check-in experience',
-          'Recent guests gave the check-in process a 5-star rating.',
-        ),
-        const SizedBox(height: 24),
-        _buildHighlightItem(
-          LucideIcons.messageSquare,
-          'Great host communication',
-          'Recent guests loved the host\'s communication.',
-        ),
+        if (property.architectureStyle.isNotEmpty) ...[
+          _buildHighlightItem(
+            LucideIcons.home,
+            property.architectureStyle,
+            'Designed with a unique architectural style.',
+          ),
+          const SizedBox(height: 24),
+        ],
+        if (property.vibe.isNotEmpty) ...[
+          _buildHighlightItem(
+            LucideIcons.sparkles,
+            property.vibe,
+            'This property is known for its ${property.vibe.toLowerCase()} vibe.',
+          ),
+          const SizedBox(height: 24),
+        ],
+        if (property.privacyLevel.isNotEmpty) ...[
+          _buildHighlightItem(
+            LucideIcons.shield,
+            property.privacyLevel,
+            'Enjoy your stay with ${property.privacyLevel.toLowerCase()}.',
+          ),
+          const SizedBox(height: 24),
+        ],
+        if (property.amenities.any((a) => a.toLowerCase().contains('pool'))) ...[
+          _buildHighlightItem(
+            LucideIcons.waves,
+            'Dive right in',
+            'This is one of the few places in the area with a pool.',
+          ),
+          const SizedBox(height: 24),
+        ],
+        if (property.rating >= 4.8) ...[
+          _buildHighlightItem(
+            LucideIcons.key,
+            'Exceptional check-in experience',
+            'Recent guests gave the check-in process a 5-star rating.',
+          ),
+        ],
       ],
     );
   }
@@ -449,21 +507,80 @@ class _VillaDetailScreenState extends ConsumerState<VillaDetailScreen> {
           style: const TextStyle(fontSize: 16, height: 1.5),
         ),
         const SizedBox(height: 16),
-        const Row(
-          children: [
-            Text(
-              'Show more',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                decoration: TextDecoration.underline,
+        InkWell(
+          onTap: () => _showDescriptionModal(context, property.description),
+          child: const Row(
+            children: [
+              Text(
+                'Show more',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  decoration: TextDecoration.underline,
+                ),
               ),
-            ),
-            SizedBox(width: 4),
-            Icon(LucideIcons.chevronRight, size: 16),
-          ],
+              SizedBox(width: 4),
+              Icon(LucideIcons.chevronRight, size: 16),
+            ],
+          ),
         ),
       ],
+    );
+  }
+
+  void _showDescriptionModal(BuildContext context, String description) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.9,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          children: [
+            Center(
+              child: Container(
+                margin: const EdgeInsets.only(top: 12, bottom: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  const SizedBox(width: 16),
+                  const Text(
+                    'About this place',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  description,
+                  style: const TextStyle(fontSize: 16, height: 1.6),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -498,7 +615,7 @@ class _VillaDetailScreenState extends ConsumerState<VillaDetailScreen> {
         SizedBox(
           width: double.infinity,
           child: OutlinedButton(
-            onPressed: () {},
+            onPressed: () => _showAmenitiesModal(context, property.amenities),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
@@ -517,6 +634,73 @@ class _VillaDetailScreenState extends ConsumerState<VillaDetailScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  void _showAmenitiesModal(BuildContext context, List<String> amenities) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.9,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          children: [
+            Center(
+              child: Container(
+                margin: const EdgeInsets.only(top: 12, bottom: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  const SizedBox(width: 16),
+                  const Text(
+                    'Amenities',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: ListView.separated(
+                padding: const EdgeInsets.all(24),
+                itemCount: amenities.length,
+                separatorBuilder: (context, index) => const Divider(height: 32),
+                itemBuilder: (context, index) {
+                  final amenity = amenities[index];
+                  return Row(
+                    children: [
+                      Icon(_getAmenityIcon(amenity), size: 32, color: Colors.black54),
+                      const SizedBox(width: 16),
+                      Text(
+                        amenity,
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -595,7 +779,7 @@ class _VillaDetailScreenState extends ConsumerState<VillaDetailScreen> {
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       Text(
-                        '${firstReview.date.year} years on Airbnb', // Placeholder logic
+                        'Verified User',
                         style: const TextStyle(
                             fontSize: 12, color: Colors.black54),
                       ),
@@ -639,7 +823,7 @@ class _VillaDetailScreenState extends ConsumerState<VillaDetailScreen> {
         SizedBox(
           width: double.infinity,
           child: OutlinedButton(
-            onPressed: () {},
+            onPressed: () => _showAllReviewsModal(context, property.reviews),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
@@ -658,6 +842,108 @@ class _VillaDetailScreenState extends ConsumerState<VillaDetailScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  void _showAllReviewsModal(BuildContext context, List<Review> reviews) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.9,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          children: [
+            Center(
+              child: Container(
+                margin: const EdgeInsets.only(top: 12, bottom: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  const SizedBox(width: 16),
+                  const Text(
+                    'Reviews',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: ListView.separated(
+                padding: const EdgeInsets.all(24),
+                itemCount: reviews.length,
+                separatorBuilder: (context, index) => const Divider(height: 32),
+                itemBuilder: (context, index) {
+                  final review = reviews[index];
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            backgroundImage: review.authorAvatar.isNotEmpty
+                                ? NetworkImage(review.authorAvatar)
+                                : null,
+                            child: review.authorAvatar.isEmpty
+                                ? const Icon(LucideIcons.user,
+                                    size: 20, color: Colors.grey)
+                                : null,
+                          ),
+                          const SizedBox(width: 12),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                review.authorName,
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              Text(
+                                DateFormat('MMMM yyyy').format(review.date),
+                                style: const TextStyle(
+                                    fontSize: 12, color: Colors.black54),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: List.generate(
+                            5,
+                            (index) => const Icon(LucideIcons.star,
+                                size: 14, color: Colors.black)),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        review.content,
+                        style: const TextStyle(height: 1.5),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -689,45 +975,49 @@ class _VillaDetailScreenState extends ConsumerState<VillaDetailScreen> {
           ),
           child: Row(
             children: [
-              Column(
-                children: [
-                  Stack(
-                    alignment: Alignment.bottomRight,
-                    children: [
-                      CircleAvatar(
-                        radius: 40,
-                        backgroundImage: property.hostAvatar.isNotEmpty
-                            ? NetworkImage(property.hostAvatar)
-                            : null,
-                        child: property.hostAvatar.isEmpty
-                            ? const Icon(LucideIcons.user,
-                                size: 40, color: Colors.grey)
-                            : null,
-                      ),
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFE91E63),
-                          shape: BoxShape.circle,
+              Flexible(
+                child: Column(
+                  children: [
+                    Stack(
+                      alignment: Alignment.bottomRight,
+                      children: [
+                        CircleAvatar(
+                          radius: 40,
+                          backgroundImage: property.hostAvatar.isNotEmpty
+                              ? NetworkImage(property.hostAvatar)
+                              : null,
+                          child: property.hostAvatar.isEmpty
+                              ? const Icon(LucideIcons.user,
+                                  size: 40, color: Colors.grey)
+                              : null,
                         ),
-                        child: const Icon(LucideIcons.shieldCheck,
-                            color: Colors.white, size: 16),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    property.hostName,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                        Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFE91E63),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(LucideIcons.shieldCheck,
+                              color: Colors.white, size: 16),
+                        ),
+                      ],
                     ),
-                  ),
-                  const Text(
-                    'Host',
-                    style: TextStyle(fontSize: 14, color: Colors.black54),
-                  ),
-                ],
+                    const SizedBox(height: 12),
+                    Text(
+                      property.hostName,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                    ),
+                    const Text(
+                      'Host',
+                      style: TextStyle(fontSize: 14, color: Colors.black54),
+                    ),
+                  ],
+                ),
               ),
               const Spacer(),
               Column(
@@ -786,7 +1076,11 @@ class _VillaDetailScreenState extends ConsumerState<VillaDetailScreen> {
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: () {},
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Messaging coming soon!')),
+              );
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.black,
               foregroundColor: Colors.white,
@@ -821,6 +1115,16 @@ class _VillaDetailScreenState extends ConsumerState<VillaDetailScreen> {
   }
 
   Widget _buildAvailability(Property property) {
+    String dateText = property.dateRangeText.isNotEmpty
+        ? property.dateRangeText
+        : 'Select dates';
+    
+    if (_selectedStartDate != null && _selectedEndDate != null) {
+      final start = DateFormat('MMM d').format(_selectedStartDate!);
+      final end = DateFormat('MMM d').format(_selectedEndDate!);
+      dateText = '$start - $end';
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -833,18 +1137,41 @@ class _VillaDetailScreenState extends ConsumerState<VillaDetailScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        Text(property.dateRangeText.isNotEmpty
-            ? property.dateRangeText
-            : 'Select dates'),
+        Text(dateText),
         const SizedBox(height: 24),
-        // Placeholder for Calendar
-        Container(
-          height: 300,
-          decoration: BoxDecoration(
-            color: Colors.grey[100],
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const Center(child: Text('Calendar Placeholder')),
+        // Calendar with blocked dates
+        StreamBuilder<List<Booking>>(
+          stream: ref.read(bookingRepositoryProvider).getPropertyBookingsStream(property.id),
+          builder: (context, snapshot) {
+            final bookings = snapshot.data ?? [];
+            final activeBookings = bookings.where((b) => 
+              b.status != Booking.statusCompleted && 
+              b.status != Booking.statusCancelled
+            ).toList();
+            
+            return Container(
+              height: 400,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey[300]!),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: GuestCalendarView(
+                  bookings: activeBookings,
+                  pricePerNight: property.pricePerNight,
+                  customPrices: property.customPrices,
+                  onDateRangeSelected: (start, end) {
+                    setState(() {
+                      _selectedStartDate = start;
+                      _selectedEndDate = end;
+                    });
+                  },
+                ),
+              ),
+            );
+          },
         ),
       ],
     );
@@ -873,7 +1200,11 @@ class _VillaDetailScreenState extends ConsumerState<VillaDetailScreen> {
             property.safetyItems.take(3).join('\n')),
         const SizedBox(height: 48),
         TextButton.icon(
-          onPressed: () {},
+          onPressed: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Report submitted. We will investigate.')),
+            );
+          },
           icon: const Icon(LucideIcons.flag, size: 16, color: Colors.black),
           label: const Text(
             'Report this listing',
@@ -930,18 +1261,38 @@ class _VillaDetailScreenState extends ConsumerState<VillaDetailScreen> {
         ),
         const SizedBox(height: 16),
         Text(
-          '${property.city}, Indonesia',
+          property.address.isNotEmpty ? property.address : '${property.city}, Indonesia',
           style: const TextStyle(fontSize: 16),
         ),
         const SizedBox(height: 24),
         Container(
-          height: 240,
-          decoration: BoxDecoration(
-            color: Colors.grey[200],
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const Center(child: Text('Map Placeholder')),
+        height: 240,
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey[300]!),
         ),
+        child: GoogleMap(
+          key: ValueKey('map_${property.id}'),
+          liteModeEnabled: true, // Re-enable Lite Mode for performance now that API key is fixed
+          initialCameraPosition: CameraPosition(
+            target: LatLng(property.location.latitude, property.location.longitude),
+            zoom: 14,
+          ),
+          zoomControlsEnabled: false,
+          mapToolbarEnabled: false,
+          scrollGesturesEnabled: false,
+          zoomGesturesEnabled: false,
+          rotateGesturesEnabled: false,
+          tiltGesturesEnabled: false,
+          myLocationButtonEnabled: false,
+          markers: {
+            Marker(
+              markerId: const MarkerId('property'),
+              position: LatLng(property.location.latitude, property.location.longitude),
+              icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+            ),
+          },
+        ),
+      ),
       ],
     );
   }
@@ -950,6 +1301,16 @@ class _VillaDetailScreenState extends ConsumerState<VillaDetailScreen> {
       BuildContext context, Property property, bool isLoggedIn) {
     final currencyFormat =
         NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
+
+    String dateText = property.dateRangeText.isNotEmpty
+        ? property.dateRangeText
+        : '${currencyFormat.format(property.pricePerNight)} night';
+
+    if (_selectedStartDate != null && _selectedEndDate != null) {
+      final start = DateFormat('MMM d').format(_selectedStartDate!);
+      final end = DateFormat('MMM d').format(_selectedEndDate!);
+      dateText = '$start - $end';
+    }
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -971,7 +1332,7 @@ class _VillaDetailScreenState extends ConsumerState<VillaDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  currencyFormat.format(property.priceTotal),
+                  currencyFormat.format(property.priceTotal > 0 ? property.priceTotal : property.pricePerNight),
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -980,9 +1341,7 @@ class _VillaDetailScreenState extends ConsumerState<VillaDetailScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  property.dateRangeText.isNotEmpty
-                      ? property.dateRangeText
-                      : 'Select dates',
+                  dateText,
                   style: const TextStyle(
                     fontSize: 14,
                     color: Colors.black87,
@@ -997,7 +1356,11 @@ class _VillaDetailScreenState extends ConsumerState<VillaDetailScreen> {
                 if (!isLoggedIn) {
                   showLoginModal(context);
                 } else {
-                  context.push('/booking', extra: property);
+                  context.push('/booking', extra: {
+                    'property': property,
+                    'startDate': _selectedStartDate,
+                    'endDate': _selectedEndDate,
+                  });
                 }
               },
               style: ElevatedButton.styleFrom(

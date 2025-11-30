@@ -10,6 +10,7 @@ import 'package:villavibe/features/properties/domain/models/property.dart';
 import 'package:villavibe/features/properties/presentation/widgets/villa_compact_card.dart';
 import 'package:villavibe/features/search/presentation/widgets/map_price_marker.dart';
 import 'package:villavibe/features/search/presentation/providers/search_provider.dart';
+import 'package:villavibe/features/properties/domain/services/price_service.dart';
 
 class SearchResultsScreen extends ConsumerStatefulWidget {
   const SearchResultsScreen({super.key});
@@ -23,53 +24,112 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
   GoogleMapController? _mapController;
   Set<Marker> _markers = {};
   String? _selectedPropertyId;
+  DateTime? _lastStartDate;
+  DateTime? _lastEndDate;
+  Set<String> _lastMarkerIds = {};
+  bool _isUpdatingMarkers = false;
 
   @override
-  void initState() {
-    super.initState();
+  void dispose() {
+    _mapController?.dispose();
+    super.dispose();
   }
 
-  Future<void> _loadMarkers(List properties) async {
-    final Set<Marker> markers = {};
+  List<Property> _filterProperties(List<Property> properties, SearchState searchState) {
+    return properties.where((property) {
+      if (!property.isListed) return false;
 
-    for (var property in properties) {
-      final isSelected = property.id == _selectedPropertyId;
-      final currencyFormat = NumberFormat.currency(
-        locale: 'id_ID',
-        symbol: 'Rp ',
-        decimalDigits: 0,
-      );
-      final icon = await MapMarkerHelper.createPriceMarker(
-        currencyFormat.format(property.pricePerNight),
-        isSelected,
-      );
+      if (searchState.isSearchingNearby && searchState.userLocation != null) {
+        final distance = Geolocator.distanceBetween(
+          searchState.userLocation!.latitude,
+          searchState.userLocation!.longitude,
+          property.location.latitude,
+          property.location.longitude,
+        );
+        return distance < 50000; // 50km radius
+      }
 
-      markers.add(
-        Marker(
-          markerId: MarkerId(property.id),
-          position: LatLng(
-            property.location.latitude,
-            property.location.longitude,
-          ),
-          icon: icon,
-          onTap: () {
-            setState(() {
-              _selectedPropertyId = property.id;
-            });
-            _loadMarkers(properties); // Reload to update colors
-          },
-        ),
-      );
-    }
-
-    if (mounted) {
-      setState(() {
-        _markers = markers;
-      });
+      if (searchState.location == null || searchState.location!.isEmpty) {
+        return true;
+      }
+      final query = searchState.location!.toLowerCase();
+      final matchesCity = property.city.toLowerCase().contains(query);
+      final matchesAddress = property.address.toLowerCase().contains(query);
+      final matchesName = property.name.toLowerCase().contains(query);
       
-      // Update camera position to fit markers
+      return matchesCity || matchesAddress || matchesName;
+    }).toList();
+  }
+
+  Future<void> _loadMarkers(List<Property> properties) async {
+    if (_isUpdatingMarkers) return;
+    _isUpdatingMarkers = true;
+
+    try {
+      final Set<Marker> markers = {};
       final searchState = ref.read(searchNotifierProvider);
-      _updateCameraPosition(properties.cast<Property>(), searchState);
+
+      for (var property in properties) {
+        final isSelected = property.id == _selectedPropertyId;
+        final currencyFormat = NumberFormat.currency(
+          locale: 'id_ID',
+          symbol: 'Rp ',
+          decimalDigits: 0,
+        );
+        
+        int displayedPrice;
+        String prefix = "";
+
+        if (searchState.startDate == null || searchState.endDate == null) {
+          displayedPrice = PriceService.getLowestPrice(property);
+          if (property.customPrices.isNotEmpty) {
+            prefix = "From ";
+          }
+        } else {
+          displayedPrice = PriceService.calculateAverageNightlyPrice(
+            property,
+            searchState.startDate,
+            searchState.endDate,
+          );
+        }
+
+        final icon = await MapMarkerHelper.createPriceMarker(
+          "$prefix${currencyFormat.format(displayedPrice)}",
+          isSelected,
+        );
+
+        markers.add(
+          Marker(
+            markerId: MarkerId(property.id),
+            position: LatLng(
+              property.location.latitude,
+              property.location.longitude,
+            ),
+            icon: icon,
+            onTap: () {
+              setState(() {
+                _selectedPropertyId = property.id;
+              });
+              // Force reload to update selection state
+              _lastMarkerIds.clear(); 
+            },
+          ),
+        );
+      }
+
+      if (mounted) {
+        setState(() {
+          _markers = markers;
+          _lastMarkerIds = properties.map((p) => p.id).toSet();
+          _lastStartDate = searchState.startDate;
+          _lastEndDate = searchState.endDate;
+        });
+        
+        // Update camera position to fit markers
+        _updateCameraPosition(properties, searchState);
+      }
+    } finally {
+      _isUpdatingMarkers = false;
     }
   }
 
@@ -90,7 +150,6 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
       );
     } else if (properties.isNotEmpty) {
       if (properties.length == 1) {
-        // If only one result, zoom to it with a comfortable level
         _mapController!.animateCamera(
           CameraUpdate.newCameraPosition(
             CameraPosition(
@@ -128,20 +187,15 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
     }
   }
 
-
-
   String _buildSearchLabel(SearchState state) {
     final List<String> parts = [];
 
-    // Location
     if (state.location != null && state.location!.isNotEmpty) {
       parts.add(state.location!);
     } else {
       parts.add('Anywhere');
     }
 
-    // Dates
-    // Dates
     if (state.startDate != null) {
       final start = DateFormat('d MMM').format(state.startDate!);
       if (state.endDate != null) {
@@ -154,7 +208,6 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
       parts.add('Any week');
     }
 
-    // Guests
     if (state.totalGuests > 0) {
       parts.add('${state.totalGuests} guests');
     } else {
@@ -175,34 +228,16 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
           // Map Layer
           propertiesAsync.when(
             data: (properties) {
-              // Filter properties based on search location
-              final filteredProperties = properties.where((property) {
-                if (searchState.isSearchingNearby && searchState.userLocation != null) {
-                  final distance = Geolocator.distanceBetween(
-                    searchState.userLocation!.latitude,
-                    searchState.userLocation!.longitude,
-                    property.location.latitude,
-                    property.location.longitude,
-                  );
-                  return distance < 50000; // 50km radius
-                }
-
-                if (searchState.location == null || searchState.location!.isEmpty) {
-                  return true;
-                }
-                final query = searchState.location!.toLowerCase();
-                final matchesCity = property.city.toLowerCase().contains(query);
-                final matchesAddress = property.address.toLowerCase().contains(query);
-                final matchesName = property.name.toLowerCase().contains(query);
-                
-                return matchesCity || matchesAddress || matchesName;
-              }).toList();
+              final filteredProperties = _filterProperties(properties.cast<Property>(), searchState);
 
               // Check if markers need to be updated
               final newIds = filteredProperties.map((p) => p.id).toSet();
-              final currentIds = _markers.map((m) => m.markerId.value).toSet();
               
-              if (newIds.length != currentIds.length || !newIds.containsAll(currentIds)) {
+              if (newIds.length != _lastMarkerIds.length || 
+                  !newIds.containsAll(_lastMarkerIds) ||
+                  searchState.startDate != _lastStartDate ||
+                  searchState.endDate != _lastEndDate) {
+                 
                  WidgetsBinding.instance.addPostFrameCallback((_) {
                     _loadMarkers(filteredProperties);
                  });
@@ -215,13 +250,18 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                 ),
                 onMapCreated: (controller) {
                   _mapController = controller;
-                  _updateCameraPosition(filteredProperties, searchState);
+                  if (_markers.isEmpty && filteredProperties.isNotEmpty) {
+                     _loadMarkers(filteredProperties);
+                  }
                 },
                 markers: _markers,
                 myLocationEnabled: true,
                 myLocationButtonEnabled: false,
                 zoomControlsEnabled: false,
                 mapToolbarEnabled: false,
+                compassEnabled: false,
+                rotateGesturesEnabled: false,
+                tiltGesturesEnabled: false,
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
@@ -331,16 +371,7 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                   slivers: [
                     propertiesAsync.when(
                       data: (properties) {
-                        final filteredProperties = properties.where((property) {
-                          if (searchState.location == null ||
-                              searchState.location!.isEmpty) {
-                            return true;
-                          }
-                          final query = searchState.location!.toLowerCase();
-                          return property.city.toLowerCase().contains(query) ||
-                              property.address.toLowerCase().contains(query) ||
-                              property.name.toLowerCase().contains(query);
-                        }).toList();
+                        final filteredProperties = _filterProperties(properties.cast<Property>(), searchState);
 
                         return SliverList(
                           delegate: SliverChildBuilderDelegate(
@@ -371,12 +402,29 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                               }
 
                               final property = filteredProperties[index - 1];
+                              
+                              int displayedPrice;
+                              bool showFromPrefix = false;
+
+                              if (searchState.startDate == null || searchState.endDate == null) {
+                                displayedPrice = PriceService.getLowestPrice(property);
+                                showFromPrefix = property.customPrices.isNotEmpty;
+                              } else {
+                                displayedPrice = PriceService.calculateAverageNightlyPrice(
+                                  property,
+                                  searchState.startDate,
+                                  searchState.endDate,
+                                );
+                              }
+                              
                               return Padding(
                                 padding: const EdgeInsets.symmetric(
                                         horizontal: 24)
                                     .copyWith(bottom: 32),
                                 child: VillaCompactCard(
                                   property: property,
+                                  displayedPrice: displayedPrice,
+                                  showFromPrefix: showFromPrefix,
                                   heroTagPrefix: 'search_result_',
                                   onTap: () {
                                     context.push(

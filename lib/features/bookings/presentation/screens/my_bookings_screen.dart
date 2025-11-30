@@ -12,6 +12,7 @@ import 'package:villavibe/features/bookings/presentation/widgets/hero_boarding_p
 import 'package:villavibe/features/bookings/presentation/widgets/mini_boarding_pass.dart';
 import 'package:villavibe/features/properties/data/repositories/property_repository.dart';
 import 'package:villavibe/features/properties/domain/models/property.dart';
+import 'package:villavibe/core/presentation/widgets/custom_snackbar.dart';
 
 import 'package:villavibe/features/bookings/presentation/providers/booking_providers.dart';
 

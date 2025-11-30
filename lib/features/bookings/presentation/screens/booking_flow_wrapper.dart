@@ -277,6 +277,7 @@ class _BookingFlowWrapperState extends ConsumerState<BookingFlowWrapper> {
         unread: false,
         tripStatus: "Pending approval",
         subtitle: "${bookingState.checkInDate} - ${bookingState.checkOutDate}",
+        otherUserId: widget.property.hostId,
       );
 
       ref.read(messageThreadsProvider.notifier).addThread(newThread);

@@ -7,6 +7,7 @@ class MessageThread {
   final bool unread;
   final String tripStatus; // “Currently hosting”, “Trip confirmed”, etc.
   final String subtitle;   // Date range info
+  final String otherUserId;
 
   MessageThread({
     required this.id,
@@ -17,5 +18,6 @@ class MessageThread {
     this.unread = false,
     required this.tripStatus,
     required this.subtitle,
+    required this.otherUserId,
   });
 }

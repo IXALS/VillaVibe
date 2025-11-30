@@ -19,6 +19,7 @@ import 'package:flutter/gestures.dart';
 import 'package:villavibe/features/bookings/domain/models/booking.dart';
 import 'package:villavibe/features/bookings/data/repositories/booking_repository.dart';
 import 'package:villavibe/features/guest/presentation/widgets/guest_calendar_view.dart';
+import 'package:villavibe/features/messages/presentation/providers/chat_providers.dart';
 
 class VillaDetailScreen extends ConsumerStatefulWidget {
   final Property property;
@@ -57,6 +58,8 @@ class _VillaDetailScreenState extends ConsumerState<VillaDetailScreen> {
     // Watch for updates, but use passed property as initial data
     final propertyAsync = ref.watch(propertyProvider(widget.property.id));
     final authState = ref.watch(authStateProvider);
+    // Ensure current user data is loaded
+    ref.watch(currentUserProvider);
 
     // Use the latest data if available, otherwise use the passed property
     final currentProperty = propertyAsync.value ?? widget.property;
@@ -1076,10 +1079,57 @@ class _VillaDetailScreenState extends ConsumerState<VillaDetailScreen> {
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
+              final user = ref.read(authStateProvider).value;
+              final appUser = ref.read(currentUserProvider).value;
+              
+              if (user == null) {
+                showLoginModal(context);
+                return;
+              }
+
+              // Show loading
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Messaging coming soon!')),
+                const SnackBar(content: Text('Connecting to host...')),
               );
+
+              final displayName = appUser?.displayName ?? 
+                                user.displayName ?? 
+                                user.email?.split('@')[0] ?? 
+                                'Guest';
+              
+              final photoUrl = appUser?.photoUrl ?? user.photoURL ?? '';
+
+              final chatId = await ref
+                  .read(chatControllerProvider.notifier)
+                  .createOrGetChat(
+                    user.uid,
+                    property.hostId,
+                    currentUserData: {
+                      'name': displayName,
+                      'avatar': photoUrl,
+                    },
+                    otherUserData: {
+                      'name': property.hostName,
+                      'avatar': property.hostAvatar,
+                    },
+                  );
+
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                if (chatId != null) {
+                  context.push('/chat', extra: {
+                    'id': chatId,
+                    'name': property.hostName,
+                    'image': property.hostAvatar,
+                    'userId': property.hostId,
+                  });
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Failed to start chat')),
+                  );
+                }
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.black,

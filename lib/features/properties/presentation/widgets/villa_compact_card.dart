@@ -1,25 +1,39 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:intl/intl.dart';
+import 'package:villavibe/features/auth/data/repositories/auth_repository.dart';
+import 'package:villavibe/features/auth/presentation/widgets/login_modal.dart';
+import 'package:villavibe/features/favorites/data/repositories/favorite_repository.dart';
+import 'package:villavibe/features/favorites/presentation/widgets/change_wishlist_modal.dart';
+import 'package:villavibe/features/favorites/presentation/widgets/create_wishlist_modal.dart';
+import 'package:villavibe/features/favorites/presentation/widgets/wishlist_snackbar.dart';
 import 'package:villavibe/features/properties/domain/models/property.dart';
 
-class VillaCompactCard extends StatefulWidget {
+class VillaCompactCard extends ConsumerStatefulWidget {
   final Property property;
   final VoidCallback? onTap;
+  final int? displayedPrice;
+  final bool showFromPrefix;
 
   const VillaCompactCard({
     super.key,
     required this.property,
     this.onTap,
+    this.heroTagPrefix,
+    this.displayedPrice,
+    this.showFromPrefix = false,
   });
 
+  final String? heroTagPrefix;
+
   @override
-  State<VillaCompactCard> createState() => _VillaCompactCardState();
+  ConsumerState<VillaCompactCard> createState() => _VillaCompactCardState();
 }
 
-class _VillaCompactCardState extends State<VillaCompactCard>
+class _VillaCompactCardState extends ConsumerState<VillaCompactCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
@@ -50,6 +64,10 @@ class _VillaCompactCardState extends State<VillaCompactCard>
       decimalDigits: 0,
     );
 
+    final userAsync = ref.watch(currentUserProvider);
+    final user = userAsync.value;
+    final isFavorite = user?.savedVillas.contains(widget.property.id) ?? false;
+
     return GestureDetector(
       onTapDown: (_) => _controller.forward(),
       onTapUp: (_) {
@@ -70,13 +88,14 @@ class _VillaCompactCardState extends State<VillaCompactCard>
                   AspectRatio(
                     aspectRatio: 1.0, // Square 1:1
                     child: Hero(
-                      tag: 'villa_img_${widget.property.id}',
+                      tag: '${widget.heroTagPrefix ?? ''}villa_img_${widget.property.id}',
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(16),
                         child: widget.property.images.isNotEmpty
                             ? CachedNetworkImage(
                                 imageUrl: widget.property.images.first,
                                 fit: BoxFit.cover,
+                                memCacheWidth: 400, // Optimize for list view
                                 placeholder: (context, url) => Container(
                                   color: Colors.grey[200],
                                 ),
@@ -93,20 +112,128 @@ class _VillaCompactCardState extends State<VillaCompactCard>
                       ),
                     ),
                   ),
+                  // Vibe Badge
+                  if (widget.property.vibe.isNotEmpty)
+                    Positioned(
+                      top: 12,
+                      left: 12,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.6),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              LucideIcons.sparkles,
+                              color: Colors.white,
+                              size: 10,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              widget.property.vibe,
+                              style: GoogleFonts.outfit(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   // Heart Icon
                   Positioned(
                     top: 12,
                     right: 12,
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.3),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        LucideIcons.heart,
-                        color: Colors.white,
-                        size: 20, // Slightly smaller to fit in circle
+                    child: GestureDetector(
+                      onTap: () async {
+                        if (user == null) {
+                          showLoginModal(context);
+                        } else {
+                          if (user.wishlists.isEmpty) {
+                            final result = await showModalBottomSheet(
+                              context: context,
+                              isScrollControlled: true,
+                              backgroundColor: Colors.transparent,
+                              builder: (context) => CreateWishlistModal(
+                                firstVillaId: widget.property.id,
+                              ),
+                            );
+
+                            if (result is Map<String, dynamic> && context.mounted) {
+                               showWishlistSnackBar(
+                                context,
+                                wishlistName: result['wishlistName'],
+                                imageUrl: result['imageUrl'],
+                                onChange: () {
+                                  if (context.mounted) {
+                                    showModalBottomSheet(
+                                      context: context,
+                                      isScrollControlled: true,
+                                      backgroundColor: Colors.transparent,
+                                      builder: (context) => ChangeWishlistModal(
+                                        villaId: widget.property.id,
+                                      ),
+                                    );
+                                  }
+                                },
+                              );
+                            }
+                          } else {
+                            if (isFavorite) {
+                              await ref
+                                  .read(favoriteRepositoryProvider)
+                                  .toggleFavorite(widget.property.id);
+                            } else {
+                              final result = await showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                backgroundColor: Colors.transparent,
+                                builder: (context) => ChangeWishlistModal(
+                                  villaId: widget.property.id,
+                                ),
+                              );
+
+                              if (result is Map<String, dynamic> && context.mounted) {
+                                 showWishlistSnackBar(
+                                  context,
+                                  wishlistName: result['wishlistName'],
+                                  imageUrl: result['imageUrl'],
+                                  onChange: () {
+                                    if (context.mounted) {
+                                      showModalBottomSheet(
+                                        context: context,
+                                        isScrollControlled: true,
+                                        backgroundColor: Colors.transparent,
+                                        builder: (context) => ChangeWishlistModal(
+                                          villaId: widget.property.id,
+                                        ),
+                                      );
+                                    }
+                                  },
+                                );
+                              }
+                            }
+                          }
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.3),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          isFavorite ? Icons.favorite : LucideIcons.heart,
+                          color: isFavorite ? Colors.red : Colors.white,
+                          size: 20, // Slightly smaller to fit in circle
+                        ),
                       ),
                     ),
                   ),
@@ -130,7 +257,7 @@ class _VillaCompactCardState extends State<VillaCompactCard>
                 children: [
                   Expanded(
                     child: Text(
-                      '${currencyFormat.format(widget.property.pricePerNight)} / night',
+                      '${widget.showFromPrefix ? "From " : ""}${currencyFormat.format(widget.displayedPrice ?? widget.property.pricePerNight)} / night',
                       maxLines: 2,
                       style: GoogleFonts.outfit(
                         fontSize: 14,

@@ -9,6 +9,7 @@ import 'package:villavibe/features/auth/data/repositories/auth_repository.dart';
 
 import 'package:villavibe/features/properties/presentation/screens/host_dashboard_screen.dart';
 import 'package:villavibe/features/properties/presentation/screens/host_property_form.dart';
+import 'package:villavibe/features/host/presentation/screens/onboarding/host_onboarding_screen.dart';
 import 'package:villavibe/features/home/presentation/screens/home_screen.dart';
 import 'package:villavibe/features/guest/presentation/screens/villa_detail_screen.dart';
 import 'package:villavibe/features/home/presentation/screens/destination_detail_screen.dart';
@@ -18,7 +19,8 @@ import 'package:villavibe/features/bookings/presentation/screens/qris_payment_sc
 import 'package:villavibe/features/properties/domain/models/property.dart';
 import 'package:villavibe/features/messages/presentation/screens/chat_list_screen.dart';
 import 'package:villavibe/features/messages/presentation/screens/chat_room_screen.dart';
-
+import 'package:villavibe/features/search/presentation/screens/search_screen.dart';
+import 'package:villavibe/features/search/presentation/screens/search_results_screen.dart';
 
 part 'app_router.g.dart';
 
@@ -87,11 +89,28 @@ GoRouter router(RouterRef ref) {
         path: '/host-dashboard',
         builder: (context, state) => const HostDashboardScreen(),
       ),
+      GoRoute(
+        path: '/host/onboarding',
+        builder: (context, state) {
+          final property = state.extra as Property?;
+          return HostOnboardingScreen(initialProperty: property);
+        },
+      ),
       // Removed /my-bookings as it's now part of Home (Tab 2)
       GoRoute(
         path: '/property/:id',
         builder: (context, state) {
-          final property = state.extra as Property?;
+          Property? property;
+          String? heroTagPrefix;
+
+          if (state.extra is Property) {
+            property = state.extra as Property;
+          } else if (state.extra is Map<String, dynamic>) {
+            final map = state.extra as Map<String, dynamic>;
+            property = map['property'] as Property?;
+            heroTagPrefix = map['heroTagPrefix'] as String?;
+          }
+
           if (property == null) {
             return const Scaffold(
               body: Center(
@@ -99,18 +118,37 @@ GoRouter router(RouterRef ref) {
                       'Error: Property data missing (Deep link not supported yet)')),
             );
           }
-          return VillaDetailScreen(property: property);
+          return VillaDetailScreen(
+            property: property,
+            heroTagPrefix: heroTagPrefix,
+          );
         },
       ),
       GoRoute(
         path: '/booking',
         builder: (context, state) {
-          final property = state.extra as Property?;
+          Property? property;
+          DateTime? startDate;
+          DateTime? endDate;
+
+          if (state.extra is Property) {
+            property = state.extra as Property;
+          } else if (state.extra is Map<String, dynamic>) {
+            final map = state.extra as Map<String, dynamic>;
+            property = map['property'] as Property?;
+            startDate = map['startDate'] as DateTime?;
+            endDate = map['endDate'] as DateTime?;
+          }
+
           if (property == null) {
             return const Scaffold(
                 body: Center(child: Text('Error: Property data missing')));
           }
-          return BookingFlowWrapper(property: property);
+          return BookingFlowWrapper(
+            property: property,
+            initialStartDate: startDate,
+            initialEndDate: endDate,
+          );
         },
         routes: [
           GoRoute(
@@ -183,6 +221,32 @@ GoRouter router(RouterRef ref) {
           final chat = state.extra as Map<String, String>;
           return ChatRoomScreen(chat: chat);
         },
+      ),
+      GoRoute(
+        path: '/search',
+        pageBuilder: (context, state) {
+          final extra = state.extra is Map<String, dynamic> ? state.extra as Map<String, dynamic> : null;
+          final isEditing = extra?['isEditing'] == true;
+          
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: SearchScreen(isEditing: isEditing),
+            opaque: false,
+            barrierColor: Colors.black.withOpacity(0.2),
+            transitionDuration: const Duration(milliseconds: 400),
+            reverseTransitionDuration: const Duration(milliseconds: 400),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+              return child;
+            },
+          );
+        },
+        routes: [
+           GoRoute(
+            path: 'results',
+            builder: (context, state) => const SearchResultsScreen(),
+          ),
+        ]
       ),
     ],
   );

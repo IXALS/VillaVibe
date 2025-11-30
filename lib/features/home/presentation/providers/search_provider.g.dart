@@ -7,7 +7,7 @@ part of 'search_provider.dart';
 // **************************************************************************
 
 String _$filteredPropertiesHash() =>
-    r'61af34e2f79b949d3a80cbda2061d78bdb4049c6';
+    r'fe797ef930b41c23cbafc6371a47e5d5f4fe1753';
 
 /// See also [filteredProperties].
 @ProviderFor(filteredProperties)
@@ -23,12 +23,12 @@ final filteredPropertiesProvider =
 );
 
 typedef FilteredPropertiesRef = AutoDisposeFutureProviderRef<List<Property>>;
-String _$searchFilterStateHash() => r'db0313076ea8a269170f7af4e535197085e9d394';
+String _$searchFilterStateHash() => r'e962e6a4d433ce11e5bad7b6904f75ed9bd69017';
 
 /// See also [SearchFilterState].
 @ProviderFor(SearchFilterState)
 final searchFilterStateProvider =
-    NotifierProvider<SearchFilterState, SearchFilter>.internal(
+    AutoDisposeNotifierProvider<SearchFilterState, SearchFilter>.internal(
   SearchFilterState.new,
   name: r'searchFilterStateProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -38,6 +38,6 @@ final searchFilterStateProvider =
   allTransitiveDependencies: null,
 );
 
-typedef _$SearchFilterState = Notifier<SearchFilter>;
+typedef _$SearchFilterState = AutoDisposeNotifier<SearchFilter>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

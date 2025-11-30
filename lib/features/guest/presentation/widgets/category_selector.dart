@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons/lucide_icons.dart';
-import 'package:flutter_animate/flutter_animate.dart'; // Pastikan import ini ada
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../domain/models/category.dart';
 
 class CategorySelector extends StatefulWidget {
-  final Function(String category) onCategoryChanged;
+  final List<Category> categories;
+  final Function(Category category) onCategoryChanged;
 
   const CategorySelector({
     super.key,
+    required this.categories,
     required this.onCategoryChanged,
   });
 
@@ -18,26 +19,17 @@ class CategorySelector extends StatefulWidget {
 class _CategorySelectorState extends State<CategorySelector> {
   int _selectedIndex = 0;
 
-  final List<Category> _categories = const [
-    Category(icon: LucideIcons.layoutGrid, label: 'All'),
-    Category(icon: LucideIcons.waves, label: 'Beach'),
-    Category(icon: LucideIcons.mountain, label: 'Mountain'),
-    Category(icon: LucideIcons.building2, label: 'City'),
-    Category(icon: LucideIcons.tent, label: 'Camping'),
-    Category(icon: LucideIcons.palmtree, label: 'Tropical'),
-  ];
-
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 44, // Sedikit lebih tinggi biar lega
+      height: 44,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 24),
-        itemCount: _categories.length,
+        itemCount: widget.categories.length,
         separatorBuilder: (_, __) => const SizedBox(width: 12),
         itemBuilder: (context, index) {
-          final category = _categories[index];
+          final category = widget.categories[index];
           final isSelected = _selectedIndex == index;
 
           return Material(
@@ -48,7 +40,7 @@ class _CategorySelectorState extends State<CategorySelector> {
                 setState(() {
                   _selectedIndex = index;
                 });
-                widget.onCategoryChanged(category.label);
+                widget.onCategoryChanged(category);
               },
               // ✨ MAGISNYA DI SINI: AnimatedContainer ✨
               child: AnimatedContainer(

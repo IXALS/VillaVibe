@@ -1,10 +1,22 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:villavibe/features/guest/domain/models/category.dart';
 import 'package:villavibe/features/properties/domain/models/property.dart';
 
+final List<Category> mockCategories = [
+  const Category(id: 'beach', label: 'Beach', iconName: 'waves'),
+  const Category(id: 'mountain', label: 'Mountain', iconName: 'mountain'),
+  const Category(id: 'city', label: 'City', iconName: 'building2'),
+  const Category(id: 'camping', label: 'Camping', iconName: 'tent'),
+  const Category(id: 'tropical', label: 'Tropical', iconName: 'palmtree'),
+];
+
 final List<Property> mockProperties = [
+  // --- CITY ---
   Property(
     id: '1',
-    name: 'Condo in Kecamatan Menteng',
-    description: 'A beautiful condo in the heart of Menteng.',
+    categoryId: 'city',
+    name: 'Luxury Condo in Menteng',
+    description: 'A beautiful condo in the heart of Menteng with skyline views.',
     pricePerNight: 1455146,
     rating: 5.0,
     images: [
@@ -12,187 +24,550 @@ final List<Property> mockProperties = [
     ],
     city: 'Menteng',
     address: 'Kecamatan Menteng, Jakarta',
-    amenities: ['Wifi', 'Pool', 'Kitchen'],
+    amenities: ['Wifi', 'Pool', 'Kitchen', 'Gym'],
     hostId: 'host1',
     hostName: 'SARE.Suites',
     hostAvatar:
         'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&auto=format&fit=crop',
     hostYearsHosting: 2,
     reviewsCount: 149,
-    hostWork: 'creative director',
-    hostDescription:
-        'SA/RE suites is a short-term rental accommodation that offers home for travelers. Our time has strived to make these properties to be good and comfort for you as home.',
-    hostResponseRate: '100%',
-    hostResponseTime: 'within an hour',
-    cancellationPolicy:
-        'Cancel before check-in on November 21 for a partial refund. After that, this reservation is non-refundable.',
-    houseRules: [
-      '2 guests maximum',
-      'No pets',
-      'No commercial photography',
-    ],
-    safetyItems: [
-      'Exterior security cameras on property',
-      'Carbon monoxide alarm',
-      'Smoke alarm',
-    ],
-    reviews: [
-      Review(
-        id: 'r1',
-        authorName: 'Idelia',
-        authorAvatar:
-            'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=200&auto=format&fit=crop',
-        rating: 5.0,
-        content:
-            'Clean, not smelly, good location, responsive host. But if you hv your own transportation & solo traveler it a bit difficult to drop key when checking out. Ti...',
-        date: DateTime(2025, 7, 15),
-      ),
-      Review(
-        id: 'r2',
-        authorName: 'John',
-        authorAvatar:
-            'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&auto=format&fit=crop',
-        rating: 4.8,
-        content: 'Great place to stay!',
-        date: DateTime(2025, 6, 20),
-      ),
-      Review(
-        id: 'r3',
-        authorName: 'Jane',
-        authorAvatar:
-            'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=200&auto=format&fit=crop',
-        rating: 5.0,
-        content: 'Highly recommended.',
-        date: DateTime(2025, 5, 10),
-      ),
-    ],
-    specs: PropertySpecs(
-      maxGuests: 2,
-      bedrooms: 1,
-      bathrooms: 1,
-    ),
+    specs: PropertySpecs(maxGuests: 2, bedrooms: 1, bathrooms: 1),
+    location: const GeoPoint(-6.1954, 106.8231), // Menteng
   ),
   Property(
     id: '2',
-    name: 'Apartment in Menteng',
-    description: 'Cozy apartment with city views.',
-    pricePerNight: 901530,
-    rating: 4.95,
+    categoryId: 'city',
+    name: 'Modern Loft in SCBD',
+    description: 'Stylish loft near Pacific Place with easy access to business district.',
+    pricePerNight: 2100000,
+    rating: 4.9,
     images: [
-      'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=1000&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=1000&auto=format&fit=crop',
     ],
-    city: 'Menteng',
-    address: 'Menteng, Jakarta',
-    amenities: ['Wifi', 'AC', 'Workspace'],
+    city: 'Jakarta',
+    address: 'SCBD, Jakarta',
+    amenities: ['Wifi', 'Workspace', 'Gym', 'Smart TV'],
     hostId: 'host2',
     hostName: 'David',
     hostAvatar:
         'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&auto=format&fit=crop',
-    hostYearsHosting: 3,
+    hostYearsHosting: 4,
     reviewsCount: 85,
-    hostWork: 'software engineer',
-    hostDescription:
-        'I love hosting travelers and sharing my city with them. My apartment is perfect for business travelers and digital nomads.',
-    hostResponseRate: '95%',
-    hostResponseTime: 'within a few hours',
-    cancellationPolicy:
-        'Free cancellation before 48 hours of check-in. After that, 50% refund.',
-    houseRules: [
-      '2 guests maximum',
-      'No smoking',
-      'Quiet hours after 10 PM',
-    ],
-    safetyItems: [
-      'Smoke alarm',
-      'Fire extinguisher',
-    ],
-    reviews: [
-      Review(
-        id: 'r4',
-        authorName: 'Sarah',
-        authorAvatar:
-            'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&auto=format&fit=crop',
-        rating: 5.0,
-        content: 'Perfect location and very clean!',
-        date: DateTime(2025, 8, 1),
-      ),
-    ],
-    specs: PropertySpecs(
-      maxGuests: 2,
-      bedrooms: 1,
-      bathrooms: 1,
-    ),
+    specs: PropertySpecs(maxGuests: 2, bedrooms: 1, bathrooms: 1),
+    location: const GeoPoint(-6.2253, 106.8103), // SCBD
   ),
   Property(
     id: '3',
-    name: 'Cottage in Yogyakarta',
-    description: 'Traditional wooden cottage surrounded by nature.',
-    pricePerNight: 976494,
-    rating: 4.85,
-    images: [
-      'https://images.unsplash.com/photo-1585543805890-6051f7829f98?q=80&w=1000&auto=format&fit=crop',
-    ],
-    city: 'Yogyakarta',
-    address: 'Yogyakarta, Indonesia',
-    amenities: ['Garden', 'Wifi', 'Breakfast'],
-    hostId: 'host3',
-    hostName: 'Budi',
-    hostAvatar:
-        'https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=200&auto=format&fit=crop',
-    hostYearsHosting: 7,
-    reviewsCount: 210,
-    specs: PropertySpecs(
-      maxGuests: 3,
-      bedrooms: 1,
-      bathrooms: 1,
-    ),
-  ),
-  Property(
-    id: '4',
-    name: 'Apartment in Ngaglik',
-    description: 'Modern apartment with stylish interior.',
-    pricePerNight: 1067011,
-    rating: 4.92,
-    images: [
-      'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=1000&auto=format&fit=crop',
-    ],
-    city: 'Ngaglik',
-    address: 'Ngaglik, Yogyakarta',
-    amenities: ['Pool', 'Gym', 'Wifi'],
-    hostId: 'host4',
-    hostName: 'Lisa',
-    hostAvatar:
-        'https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=200&auto=format&fit=crop',
-    hostYearsHosting: 2,
-    reviewsCount: 45,
-    specs: PropertySpecs(
-      maxGuests: 2,
-      bedrooms: 1,
-      bathrooms: 1,
-    ),
-  ),
-  Property(
-    id: '5',
-    name: 'Apartment in Kalibata',
-    description: 'Affordable apartment near the station.',
-    pricePerNight: 350000,
+    categoryId: 'city',
+    name: 'Spacious Apartment in Surabaya',
+    description: 'Large apartment perfect for families visiting Surabaya.',
+    pricePerNight: 850000,
     rating: 4.7,
     images: [
       'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=1000&auto=format&fit=crop',
     ],
-    city: 'Kalibata',
-    address: 'Kalibata, Jakarta',
-    amenities: ['Wifi', 'Kitchen'],
+    city: 'Surabaya',
+    address: 'Tunjungan, Surabaya',
+    amenities: ['Wifi', 'Kitchen', 'Parking', 'Pool'],
+    hostId: 'host3',
+    hostName: 'Budi',
+    hostAvatar:
+        'https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=200&auto=format&fit=crop',
+    hostYearsHosting: 5,
+    reviewsCount: 120,
+    specs: PropertySpecs(maxGuests: 4, bedrooms: 2, bathrooms: 2),
+    location: const GeoPoint(-7.2575, 112.7521), // Surabaya
+  ),
+  Property(
+    id: '4',
+    categoryId: 'city',
+    name: 'Cozy Studio in Bandung',
+    description: 'Minimalist studio apartment in the center of Bandung.',
+    pricePerNight: 450000,
+    rating: 4.6,
+    images: [
+      'https://images.unsplash.com/photo-1505691938895-1758d7feb511?q=80&w=1000&auto=format&fit=crop',
+    ],
+    city: 'Bandung',
+    address: 'Dago, Bandung',
+    amenities: ['Wifi', 'AC', 'Kitchenette'],
+    hostId: 'host4',
+    hostName: 'Siti',
+    hostAvatar:
+        'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=200&auto=format&fit=crop',
+    hostYearsHosting: 1,
+    reviewsCount: 30,
+    specs: PropertySpecs(maxGuests: 2, bedrooms: 1, bathrooms: 1),
+    location: const GeoPoint(-6.8804, 107.6105), // Dago
+  ),
+  Property(
+    id: '5',
+    categoryId: 'city',
+    name: 'Penthouse in Medan',
+    description: 'Exclusive penthouse with panoramic city views.',
+    pricePerNight: 3500000,
+    rating: 5.0,
+    images: [
+      'https://images.unsplash.com/photo-1512918760513-95f1929757cd?q=80&w=1000&auto=format&fit=crop',
+    ],
+    city: 'Medan',
+    address: 'Medan City Center',
+    amenities: ['Private Elevator', 'Jacuzzi', 'Concierge'],
     hostId: 'host5',
-    hostName: 'Agus',
+    hostName: 'Robert',
+    hostAvatar:
+        'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200&auto=format&fit=crop',
+    hostYearsHosting: 8,
+    reviewsCount: 45,
+    specs: PropertySpecs(maxGuests: 6, bedrooms: 3, bathrooms: 3),
+    location: const GeoPoint(3.5952, 98.6722), // Medan
+  ),
+
+  // --- BEACH ---
+  Property(
+    id: '6',
+    categoryId: 'beach',
+    name: 'Beachfront Villa in Seminyak',
+    description: 'Stunning villa right on the beach with private pool and sunset views.',
+    pricePerNight: 2500000,
+    rating: 4.9,
+    images: [
+      'https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?q=80&w=2070&auto=format&fit=crop',
+    ],
+    city: 'Bali',
+    address: 'Seminyak, Bali',
+    amenities: ['Pool', 'Wifi', 'Beach Access', 'Kitchen', 'Staff'],
+    hostId: 'host6',
+    hostName: 'Wayan',
+    hostAvatar:
+        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop',
+    hostYearsHosting: 10,
+    reviewsCount: 320,
+    specs: PropertySpecs(maxGuests: 6, bedrooms: 3, bathrooms: 3),
+    location: const GeoPoint(-8.6895, 115.1686), // Seminyak
+  ),
+  Property(
+    id: '7',
+    categoryId: 'beach',
+    name: 'Secluded Bungalow in Lombok',
+    description: 'Peaceful bungalow steps away from the white sandy beach.',
+    pricePerNight: 1200000,
+    rating: 4.8,
+    images: [
+      'https://images.unsplash.com/photo-1540541338287-41700207dee6?q=80&w=2070&auto=format&fit=crop',
+    ],
+    city: 'Lombok',
+    address: 'Kuta, Lombok',
+    amenities: ['Wifi', 'Breakfast', 'Hammock'],
+    hostId: 'host7',
+    hostName: 'Lina',
+    hostAvatar:
+        'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=200&auto=format&fit=crop',
+    hostYearsHosting: 3,
+    reviewsCount: 75,
+    specs: PropertySpecs(maxGuests: 2, bedrooms: 1, bathrooms: 1),
+    location: const GeoPoint(-8.8955, 116.2952), // Kuta Lombok
+  ),
+  Property(
+    id: '8',
+    categoryId: 'beach',
+    name: 'Cliffside Villa in Uluwatu',
+    description: 'Breathtaking ocean views from the cliff edge.',
+    pricePerNight: 4500000,
+    rating: 5.0,
+    images: [
+      'https://images.unsplash.com/photo-1510798831971-661eb04b3739?q=80&w=1000&auto=format&fit=crop', // Replaced with generic nice view
+    ],
+    city: 'Bali',
+    address: 'Uluwatu, Bali',
+    amenities: ['Infinity Pool', 'Butler', 'Spa'],
+    hostId: 'host8',
+    hostName: 'Ketut',
+    hostAvatar:
+        'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&auto=format&fit=crop',
+    hostYearsHosting: 6,
+    reviewsCount: 150,
+    specs: PropertySpecs(maxGuests: 4, bedrooms: 2, bathrooms: 2),
+    location: const GeoPoint(-8.8151, 115.0884), // Uluwatu
+  ),
+  Property(
+    id: '9',
+    categoryId: 'beach',
+    name: 'Surf Shack in Canggu',
+    description: 'Cool and trendy villa near the best surf spots.',
+    pricePerNight: 1800000,
+    rating: 4.7,
+    images: [
+      'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?q=80&w=2070&auto=format&fit=crop',
+    ],
+    city: 'Bali',
+    address: 'Canggu, Bali',
+    amenities: ['Pool', 'Wifi', 'Board Storage'],
+    hostId: 'host9',
+    hostName: 'Jake',
+    hostAvatar:
+        'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=200&auto=format&fit=crop',
+    hostYearsHosting: 2,
+    reviewsCount: 40,
+    specs: PropertySpecs(maxGuests: 4, bedrooms: 2, bathrooms: 2),
+    location: const GeoPoint(-8.6478, 115.1385), // Canggu
+  ),
+  Property(
+    id: '10',
+    categoryId: 'beach',
+    name: 'Private Island Resort',
+    description: 'Exclusive resort on a private island in Karimunjawa.',
+    pricePerNight: 5500000,
+    rating: 5.0,
+    images: [
+      'https://images.unsplash.com/photo-1537996194471-e657df975ab4?q=80&w=1000&auto=format&fit=crop',
+    ],
+    city: 'Karimunjawa',
+    address: 'Karimunjawa Islands',
+    amenities: ['All Inclusive', 'Boat Transfer', 'Diving'],
+    hostId: 'host10',
+    hostName: 'Resort Mgmt',
+    hostAvatar:
+        'https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=200&auto=format&fit=crop',
+    hostYearsHosting: 15,
+    reviewsCount: 500,
+    specs: PropertySpecs(maxGuests: 2, bedrooms: 1, bathrooms: 1),
+    location: const GeoPoint(-5.8480, 110.4350), // Karimunjawa
+  ),
+
+  // --- MOUNTAIN ---
+  Property(
+    id: '11',
+    categoryId: 'mountain',
+    name: 'Cozy Cabin in Batu',
+    description: 'Wooden cabin with fireplace and mountain views.',
+    pricePerNight: 1200000,
+    rating: 4.8,
+    images: [
+      'https://images.unsplash.com/photo-1510798831971-661eb04b3739?q=80&w=1000&auto=format&fit=crop',
+    ],
+    city: 'Batu',
+    address: 'Batu, Malang',
+    amenities: ['Fireplace', 'Wifi', 'BBQ'],
+    hostId: 'host11',
+    hostName: 'Slamet',
+    hostAvatar:
+        'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=200&auto=format&fit=crop',
+    hostYearsHosting: 5,
+    reviewsCount: 90,
+    specs: PropertySpecs(maxGuests: 4, bedrooms: 2, bathrooms: 1),
+    location: const GeoPoint(-7.8712, 112.5265), // Batu
+  ),
+  Property(
+    id: '12',
+    categoryId: 'mountain',
+    name: 'Villa with Bromo View',
+    description: 'Wake up to the majestic view of Mount Bromo.',
+    pricePerNight: 800000,
+    rating: 4.6,
+    images: [
+      'https://images.unsplash.com/photo-1518684079-3c830dcef090?q=80&w=1000&auto=format&fit=crop',
+    ],
+    city: 'Bromo',
+    address: 'Probolinggo, East Java',
+    amenities: ['Breakfast', 'Jeep Tour', 'Heater'],
+    hostId: 'host12',
+    hostName: 'Joko',
+    hostAvatar:
+        'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&auto=format&fit=crop',
+    hostYearsHosting: 8,
+    reviewsCount: 200,
+    specs: PropertySpecs(maxGuests: 3, bedrooms: 1, bathrooms: 1),
+    location: const GeoPoint(-7.9425, 112.9530), // Bromo
+  ),
+  Property(
+    id: '13',
+    categoryId: 'mountain',
+    name: 'Puncak Tea Garden Villa',
+    description: 'Relax in a villa surrounded by tea plantations.',
+    pricePerNight: 2500000,
+    rating: 4.7,
+    images: [
+      'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=2070&auto=format&fit=crop',
+    ],
+    city: 'Puncak',
+    address: 'Cisarua, Bogor',
+    amenities: ['Pool', 'Garden', 'Kitchen'],
+    hostId: 'host13',
+    hostName: 'Rina',
+    hostAvatar:
+        'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=200&auto=format&fit=crop',
+    hostYearsHosting: 4,
+    reviewsCount: 60,
+    specs: PropertySpecs(maxGuests: 8, bedrooms: 4, bathrooms: 3),
+    location: const GeoPoint(-6.7022, 106.9924), // Puncak
+  ),
+  Property(
+    id: '14',
+    categoryId: 'mountain',
+    name: 'Kaliurang Retreat',
+    description: 'Quiet retreat at the foot of Mount Merapi.',
+    pricePerNight: 600000,
+    rating: 4.5,
+    images: [
+      'https://images.unsplash.com/photo-1585543805890-6051f7829f98?q=80&w=1000&auto=format&fit=crop',
+    ],
+    city: 'Yogyakarta',
+    address: 'Kaliurang, Yogyakarta',
+    amenities: ['Wifi', 'Parking', 'Garden'],
+    hostId: 'host14',
+    hostName: 'Tejo',
+    hostAvatar:
+        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop',
+    hostYearsHosting: 10,
+    reviewsCount: 110,
+    specs: PropertySpecs(maxGuests: 4, bedrooms: 2, bathrooms: 1),
+    location: const GeoPoint(-7.5975, 110.4234), // Kaliurang
+  ),
+  Property(
+    id: '15',
+    categoryId: 'mountain',
+    name: 'Luxury Chalet in Dieng',
+    description: 'Premium chalet above the clouds in Dieng Plateau.',
+    pricePerNight: 1500000,
+    rating: 4.9,
+    images: [
+      'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?q=80&w=1972&auto=format&fit=crop',
+    ],
+    city: 'Dieng',
+    address: 'Wonosobo, Central Java',
+    amenities: ['Fireplace', 'Hot Water', 'Breakfast'],
+    hostId: 'host15',
+    hostName: 'Dewi',
+    hostAvatar:
+        'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=200&auto=format&fit=crop',
+    hostYearsHosting: 2,
+    reviewsCount: 40,
+    specs: PropertySpecs(maxGuests: 4, bedrooms: 2, bathrooms: 2),
+    location: const GeoPoint(-7.2050, 109.9142), // Dieng
+  ),
+
+  // --- CAMPING ---
+  Property(
+    id: '16',
+    categoryId: 'camping',
+    name: 'Glamping Lakeside Rancabali',
+    description: 'Luxury tent by the lake with stunning views.',
+    pricePerNight: 1100000,
+    rating: 4.8,
+    images: [
+      'https://images.unsplash.com/photo-1523987355523-c7b5b0dd90a7?q=80&w=2070&auto=format&fit=crop',
+    ],
+    city: 'Bandung',
+    address: 'Ciwidey, Bandung',
+    amenities: ['Restaurant', 'Boat', 'Bonfire'],
+    hostId: 'host16',
+    hostName: 'Asep',
+    hostAvatar:
+        'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&auto=format&fit=crop',
+    hostYearsHosting: 3,
+    reviewsCount: 150,
+    specs: PropertySpecs(maxGuests: 4, bedrooms: 1, bathrooms: 1),
+    location: const GeoPoint(-7.1338, 107.4035), // Ciwidey
+  ),
+  Property(
+    id: '17',
+    categoryId: 'camping',
+    name: 'Forest Camp Bogor',
+    description: 'Camping ground in the middle of pine forest.',
+    pricePerNight: 300000,
+    rating: 4.5,
+    images: [
+      'https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?q=80&w=2070&auto=format&fit=crop',
+    ],
+    city: 'Bogor',
+    address: 'Sentul, Bogor',
+    amenities: ['Shared Bathroom', 'Tent Rental', 'Hiking'],
+    hostId: 'host17',
+    hostName: 'Ujang',
+    hostAvatar:
+        'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=200&auto=format&fit=crop',
+    hostYearsHosting: 5,
+    reviewsCount: 80,
+    specs: PropertySpecs(maxGuests: 2, bedrooms: 1, bathrooms: 0),
+    location: const GeoPoint(-6.5875, 106.8756), // Sentul
+  ),
+  Property(
+    id: '18',
+    categoryId: 'camping',
+    name: 'Beach Camping in Pacitan',
+    description: 'Sleep under the stars on the white sands of Pacitan.',
+    pricePerNight: 250000,
+    rating: 4.6,
+    images: [
+      'https://images.unsplash.com/photo-1496545672479-df5c1504e1b5?q=80&w=2070&auto=format&fit=crop',
+    ],
+    city: 'Pacitan',
+    address: 'Klayar Beach, Pacitan',
+    amenities: ['Bonfire', 'Surfboard', 'Shared Toilet'],
+    hostId: 'host18',
+    hostName: 'Bambang',
+    hostAvatar:
+        'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200&auto=format&fit=crop',
+    hostYearsHosting: 2,
+    reviewsCount: 30,
+    specs: PropertySpecs(maxGuests: 2, bedrooms: 1, bathrooms: 0),
+    location: const GeoPoint(-8.2325, 110.9972), // Pacitan
+  ),
+  Property(
+    id: '19',
+    categoryId: 'camping',
+    name: 'Luxury Dome in Kintamani',
+    description: 'Unique dome glamping with Mount Batur view.',
+    pricePerNight: 1800000,
+    rating: 4.9,
+    images: [
+      'https://images.unsplash.com/photo-1533630762944-788575086889?q=80&w=2070&auto=format&fit=crop', // Generic dome/camping
+    ],
+    city: 'Bali',
+    address: 'Kintamani, Bali',
+    amenities: ['Hot Spring', 'Breakfast', 'Wifi'],
+    hostId: 'host19',
+    hostName: 'Wayan',
     hostAvatar:
         'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop',
     hostYearsHosting: 4,
-    reviewsCount: 98,
-    specs: PropertySpecs(
-      maxGuests: 2,
-      bedrooms: 1,
-      bathrooms: 1,
-    ),
+    reviewsCount: 110,
+    specs: PropertySpecs(maxGuests: 2, bedrooms: 1, bathrooms: 1),
+    location: const GeoPoint(-8.2415, 115.3633), // Kintamani
+  ),
+  Property(
+    id: '20',
+    categoryId: 'camping',
+    name: 'Campervan Experience',
+    description: 'Rent a campervan and explore Jogja freely.',
+    pricePerNight: 900000,
+    rating: 4.7,
+    images: [
+      'https://images.unsplash.com/photo-1523987355523-c7b5b0dd90a7?q=80&w=2070&auto=format&fit=crop', // Reusing camping image
+    ],
+    city: 'Yogyakarta',
+    address: 'Mobile',
+    amenities: ['Kitchen', 'Bed', 'Driver'],
+    hostId: 'host20',
+    hostName: 'JogjaCamp',
+    hostAvatar:
+        'https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=200&auto=format&fit=crop',
+    hostYearsHosting: 6,
+    reviewsCount: 200,
+    specs: PropertySpecs(maxGuests: 4, bedrooms: 1, bathrooms: 0),
+    location: const GeoPoint(-7.7956, 110.3695), // Jogja
+  ),
+
+  // --- TROPICAL ---
+  Property(
+    id: '21',
+    categoryId: 'tropical',
+    name: 'Bamboo House in Ubud',
+    description: 'Eco-friendly bamboo house in the middle of jungle.',
+    pricePerNight: 2200000,
+    rating: 4.95,
+    images: [
+      'https://images.unsplash.com/photo-1576354302919-96748cb8299e?q=80&w=1000&auto=format&fit=crop',
+    ],
+    city: 'Ubud',
+    address: 'Ubud, Bali',
+    amenities: ['Pool', 'Nature', 'Wifi'],
+    hostId: 'host21',
+    hostName: 'Made',
+    hostAvatar:
+        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop',
+    hostYearsHosting: 8,
+    reviewsCount: 400,
+    specs: PropertySpecs(maxGuests: 2, bedrooms: 1, bathrooms: 1),
+    location: const GeoPoint(-8.5069, 115.2625), // Ubud
+  ),
+  Property(
+    id: '22',
+    categoryId: 'tropical',
+    name: 'Tropical Villa in Canggu',
+    description: 'Modern tropical villa with open living area.',
+    pricePerNight: 3000000,
+    rating: 4.8,
+    images: [
+      'https://images.unsplash.com/photo-1580587771525-78b9dba3b91d?q=80&w=1974&auto=format&fit=crop',
+    ],
+    city: 'Bali',
+    address: 'Canggu, Bali',
+    amenities: ['Pool', 'Kitchen', 'Staff'],
+    hostId: 'host22',
+    hostName: 'Putu',
+    hostAvatar:
+        'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=200&auto=format&fit=crop',
+    hostYearsHosting: 5,
+    reviewsCount: 120,
+    specs: PropertySpecs(maxGuests: 6, bedrooms: 3, bathrooms: 3),
+    location: const GeoPoint(-8.6478, 115.1385), // Canggu (Same as other Canggu)
+  ),
+  Property(
+    id: '23',
+    categoryId: 'tropical',
+    name: 'Jungle Retreat in Costa Rica Style',
+    description: 'Experience the tropical rainforest vibe.',
+    pricePerNight: 1600000,
+    rating: 4.7,
+    images: [
+      'https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?q=80&w=2070&auto=format&fit=crop',
+    ],
+    city: 'Banyuwangi',
+    address: 'Banyuwangi, East Java',
+    amenities: ['Garden', 'Breakfast', 'Tours'],
+    hostId: 'host23',
+    hostName: 'Sari',
+    hostAvatar:
+        'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=200&auto=format&fit=crop',
+    hostYearsHosting: 3,
+    reviewsCount: 50,
+    specs: PropertySpecs(maxGuests: 2, bedrooms: 1, bathrooms: 1),
+    location: const GeoPoint(-8.2192, 114.3691), // Banyuwangi
+  ),
+  Property(
+    id: '24',
+    categoryId: 'tropical',
+    name: 'Overwater Bungalow',
+    description: 'Stay above the crystal clear water.',
+    pricePerNight: 6000000,
+    rating: 5.0,
+    images: [
+      'https://images.unsplash.com/photo-1439066615861-d1fb8bc3a78a?q=80&w=2070&auto=format&fit=crop',
+    ],
+    city: 'Raja Ampat',
+    address: 'Misool, Raja Ampat',
+    amenities: ['Diving', 'Full Board', 'Kayak'],
+    hostId: 'host24',
+    hostName: 'Papua Dive',
+    hostAvatar:
+        'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&auto=format&fit=crop',
+    hostYearsHosting: 12,
+    reviewsCount: 250,
+    specs: PropertySpecs(maxGuests: 2, bedrooms: 1, bathrooms: 1),
+    location: const GeoPoint(-0.2333, 130.5170), // Raja Ampat
+  ),
+  Property(
+    id: '25',
+    categoryId: 'tropical',
+    name: 'Rice Field Villa',
+    description: 'Peaceful villa overlooking green rice terraces.',
+    pricePerNight: 1300000,
+    rating: 4.85,
+    images: [
+      'https://images.unsplash.com/photo-1537996194471-e657df975ab4?q=80&w=1000&auto=format&fit=crop', // Reusing nice nature image
+    ],
+    city: 'Tabanan',
+    address: 'Tabanan, Bali',
+    amenities: ['Pool', 'Wifi', 'Yoga Deck'],
+    hostId: 'host25',
+    hostName: 'Komang',
+    hostAvatar:
+        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop',
+    hostYearsHosting: 7,
+    reviewsCount: 180,
+    specs: PropertySpecs(maxGuests: 4, bedrooms: 2, bathrooms: 2),
+    location: const GeoPoint(-8.5411, 115.1232), // Tabanan
   ),
 ];

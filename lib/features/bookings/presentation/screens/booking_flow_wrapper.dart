@@ -15,33 +15,58 @@ import 'package:villavibe/features/messages/domain/models/message_thread.dart';
 import 'package:villavibe/features/properties/domain/models/property.dart';
 import 'package:villavibe/features/messages/data/message_repository.dart';
 
-class BookingFlowWrapper extends ConsumerWidget {
+class BookingFlowWrapper extends ConsumerStatefulWidget {
   final Property property;
+  final DateTime? initialStartDate;
+  final DateTime? initialEndDate;
 
-  const BookingFlowWrapper({super.key, required this.property});
+  const BookingFlowWrapper({
+    super.key,
+    required this.property,
+    this.initialStartDate,
+    this.initialEndDate,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final bookingState = ref.watch(bookingControllerProvider(property));
-    final controller = ref.read(bookingControllerProvider(property).notifier);
+  ConsumerState<BookingFlowWrapper> createState() => _BookingFlowWrapperState();
+}
+
+class _BookingFlowWrapperState extends ConsumerState<BookingFlowWrapper> {
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialStartDate != null && widget.initialEndDate != null) {
+      // Schedule the update after the first frame to ensure the provider is initialized
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref
+            .read(bookingControllerProvider(widget.property).notifier)
+            .updateDates(widget.initialStartDate!, widget.initialEndDate!);
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bookingState = ref.watch(bookingControllerProvider(widget.property));
+    final controller = ref.read(bookingControllerProvider(widget.property).notifier);
 
     // Determine which content to show based on current step
     Widget content;
     switch (bookingState.currentStep) {
       case 0:
-        content = BookingReviewContent(property: property);
+        content = BookingReviewContent(property: widget.property);
         break;
       case 1:
-        content = BookingPaymentContent(property: property);
+        content = BookingPaymentContent(property: widget.property);
         break;
       case 2:
-        content = BookingMessageContent(property: property);
+        content = BookingMessageContent(property: widget.property);
         break;
       case 3:
-        content = RequestToBookContent(property: property);
+        content = RequestToBookContent(property: widget.property);
         break;
       default:
-        content = BookingReviewContent(property: property);
+        content = BookingReviewContent(property: widget.property);
     }
 
     return PopScope(
@@ -223,18 +248,19 @@ class BookingFlowWrapper extends ConsumerWidget {
     );
 
     try {
-      // Create pending booking
+      // Create booking
       final user = ref.read(currentUserProvider).value!;
       final booking = Booking(
         id: '', // Repo handles ID
-        propertyId: property.id,
+        propertyId: widget.property.id,
         guestId: user.uid,
-        hostId: property.hostId,
+        hostId: widget.property.hostId,
         startDate: bookingState.checkInDate,
         endDate: bookingState.checkOutDate,
         totalPrice: bookingState.totalPrice,
         status: Booking.statusPending,
         messageToHost: bookingState.messageToHost,
+        guestCount: bookingState.guestCount,
         createdAt: DateTime.now(),
       );
 
@@ -263,19 +289,11 @@ class BookingFlowWrapper extends ConsumerWidget {
 
       if (context.mounted) {
         Navigator.of(context, rootNavigator: true).pop(); // Close overlay
-        controller
-            .nextStep(); // Move to step 4 (QRIS) internally if needed, but we are navigating away
+        controller.nextStep(); 
 
-        // Navigate to QRIS screen
-        // Note: QRIS screen is NOT part of this wrapper flow in the original design?
-        // The original design had QRIS as a separate screen.
-        // The user request says "Booking Flow (Review -> Payment -> Message)".
-        // It doesn't explicitly say QRIS should be in the wrapper, but "Persistent Bottom Bar... Booking Steps".
-        // Usually QRIS is a result screen.
-        // Let's keep QRIS as a separate route for now as it might have different bottom bar requirements (e.g. "I have paid").
-
+        // Always treat as Instant Book -> Go to Payment
         context.push('/booking/qris', extra: {
-          'property': property,
+          'property': widget.property,
           'bookingId': bookingId,
         });
       }
